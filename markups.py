@@ -7,18 +7,20 @@ def gen_main_markup():
     markup = InlineKeyboardMarkup()
     markup.row_width = 2
     markup.add(
-        InlineKeyboardButton("Чтение", callback_data="/read"),
-        InlineKeyboardButton("Запись", callback_data="/write")
+        InlineKeyboardButton('Создание', callback_data='/create'),
+        InlineKeyboardButton('Чтение', callback_data='/read'),
+        InlineKeyboardButton('Редактирование', callback_data='/update'),
+        InlineKeyboardButton('Удаление', callback_data='/delete')
         )
     return markup
 
 
-def gen_edit_markup():
-    '''Отображение кнопок после нажатия кнопки запись.'''
+def answer_markup():
+    '''Выбор прицепа или создание нового.'''
     markup = InlineKeyboardMarkup()
     markup.row_width = 2
     markup.add(
-        InlineKeyboardButton("Редактировать запись", callback_data="/edit"),
-        InlineKeyboardButton("Удалить запись", callback_data="/delete")
+        InlineKeyboardButton("Да", callback_data="/yes"),
+        InlineKeyboardButton("Нет", callback_data="/no")
         )
     return markup

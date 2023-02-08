@@ -1,7 +1,7 @@
 
-TOKEN = "6145350195:AAE6cjMxBHe59jK8JORthBs39NrnT4sZix4"
+TOKEN = "6052229593:AAFZ7aiWk9--c_0yle3P2Uw1VTNXdPg7tUM"
 URL = 'CHMZAP'
-keys_list = ['CHMZAP']
+key = ['CHMZAP']
 
 # connection_config_dict = {
 #     'user': 'ShelepovFamily',
