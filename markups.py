@@ -1,26 +1,22 @@
 
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot import types
 
 
-def gen_main_markup():
-    '''Отображение кнопок после ввода ключа доступа.'''
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 2
-    markup.add(
-        InlineKeyboardButton('Создание', callback_data='/create'),
-        InlineKeyboardButton('Чтение', callback_data='/read'),
-        InlineKeyboardButton('Редактирование', callback_data='/update'),
-        InlineKeyboardButton('Удаление', callback_data='/delete')
-        )
+#Главное меню
+def main_markup():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    itempbtn1 = types.KeyboardButton('Создание')
+    itempbtn2 = types.KeyboardButton('Чтение')
+    itempbtn3 = types.KeyboardButton('Редактирование')
+    itempbtn4 = types.KeyboardButton('Удаление')
+    markup.add(itempbtn1, itempbtn2, itempbtn3, itempbtn4)
     return markup
 
 
-def answer_markup():
-    '''Выбор прицепа или создание нового.'''
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 2
-    markup.add(
-        InlineKeyboardButton("Да", callback_data="/yes"),
-        InlineKeyboardButton("Нет", callback_data="/no")
-        )
+# Есть ли прицеп в списке?
+def choose_markup():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    itempbtn1 = types.KeyboardButton('Да')
+    itempbtn2 = types.KeyboardButton('Нет')
+    markup.add(itempbtn1, itempbtn2)
     return markup
