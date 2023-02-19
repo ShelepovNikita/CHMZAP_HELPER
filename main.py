@@ -35,23 +35,6 @@ from config import bot, db
 #     return "ok", 200
 
 
-# Часть кода для локального запуска
-
-
-# @app.route('/', methods=['POST', 'GET'])
-# def index():
-#     if request.headers.get('content-type') == 'application/json':
-#         update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
-#         bot.process_new_updates([update])
-#         return ''
-#     else:
-#         abort(403)
-#     if request.method == 'POST':
-#         return Response('OK', status=200)
-#     else:
-#         return ' '
-
-
 @bot.message_handler(commands=['start'])
 def first_step(message):
     db.create_tables()
@@ -97,7 +80,8 @@ def register_step(message):
         db.create_user(user_id, first_name, last_name)
         bot.send_message(
             message.chat.id,
-            'Регистрация успешна. Вы внесены в базу данных.'
+            'Регистрация успешна. Вы внесены в базу данных.',
+            reply_markup=main_markup()
             )
 
 
@@ -123,7 +107,7 @@ def process_operation_step(message):
             )
             bot.register_next_step_handler(msg, create_operation_step)
         except Exception:
-            bot.reply_to(message, 'Что то пошло не так...')
+            bot.reply_to(message, 'На этапе создания записи произошла ошибка.')
     elif message.text == 'Чтение':
         try:
             chat_id = message.chat.id
@@ -134,7 +118,7 @@ def process_operation_step(message):
             )
             # Место для следующего шага по чтению записей.
         except Exception:
-            bot.reply_to(message, 'XYI')
+            bot.reply_to(message, 'На этапе чтения записей произошла ошибка.')
     elif message.text == 'Редактирование':
         try:
             chat_id = message.chat.id
@@ -145,7 +129,7 @@ def process_operation_step(message):
             )
             # Место для следующего шага по редактированию записей.
         except Exception:
-            bot.reply_to(message, 'XYI')
+            bot.reply_to(message, 'На этапе редактирования записей произошла ошибка.')
     elif message.text == 'Удаление':
         try:
             chat_id = message.chat.id
@@ -156,11 +140,31 @@ def process_operation_step(message):
             )
             # Место для следующего шага по удалению записей.
         except Exception:
-            bot.reply_to(message, 'XYI')
+            (message, 'На этапе удаления записей произошла ошибка.')
     else:
         bot.send_message(
             message.chat.id,
-            'Вы разблокировали секретное сообщение, вопрос только нахуя'
+            'Для работы с ботом пользуйтесь кнопками под строкой ввода \n'
+            'Если после ввода комманды /start кнопки не появились \n'
+            'Используйте команду повторно'
             )
+
+
+@bot.message_handler(content_types=['text', 'audio', 'document', 'photo', 'sticker', 'video'])
+def text_filter(message):
+    try:
+        chat_id = message.chat.id
+        db.check_user(chat_id)
+        bot.send_message(
+            chat_id,
+            'Бот не поддерживает работу с текстом. \n'
+            'Для дальнейшей работы вызовите главное меню \n'
+            'Главное меню - /start'
+        )
+    except Exception:
+        (message,
+         'Вы не прошли процесс регистрации \n'
+         '/start')
+
 
 bot.polling(non_stop=True)

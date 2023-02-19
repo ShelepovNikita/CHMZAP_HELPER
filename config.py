@@ -14,3 +14,4 @@ db = database.Database('chmzap_sq.sqlite')
 #     'host': 'ShelepovFamily.mysql.pythonanywhere-services.com',
 #     'database': 'ShelepovFamily$CHMZAP'
 # }
+# https://api.telegram.org/bot6052229593:AAFZ7aiWk9--c_0yle3P2Uw1VTNXdPg7tUM/setWebhook?remove

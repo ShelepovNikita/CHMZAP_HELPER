@@ -30,7 +30,7 @@ class Database:
                 document TEXT,
                 status INTEGER,
                 trailer_id INTEGER NOT NULL,
-                causer_id INTEGER NOT NULL,
+                causer_id INTEGER,
                 user_id INTEGER NOT NULL,
                 FOREIGN KEY(trailer_id) REFERENCES trailers(id),
                 FOREIGN KEY(user_id) REFERENCES users(id),
