@@ -2,9 +2,24 @@
 
 from datetime import datetime
 from config import bot, db
-from markups import choose_markup, choose_causer, step_back, create_markup, no_btn
+from markups import (
+    choose_markup,
+    choose_causer,
+    create_markup,
+    main_btn,
+    search_create_trailer_btn,
+    main_trouble_btn,
+    yes_main_menu_btns,
+    status_trouble_btn
+)
 from telebot import types
 from transform import transform_to_1c
+from telebot.apihelper import ApiTelegramException
+from constains import (
+    TOO_LONG,
+    IS_EMPTY
+)
+import sqlite3
 
 user_dict = {}
 
@@ -28,122 +43,210 @@ class Trailer:
         self.designation = None
 
 
-def process_operation_step(message):
-    if message.text == 'Шаг назад':
-        try:
-            chat_id = message.chat.id
+# Начало первого блока создания. Поиск или создание прицепа
+# =================================================================================================================================================
+def new_create_operation_step(message):
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        if user_text == 'Найти прицеп':
+            msg = bot.send_message(
+                chat_id,
+                'Введите обозначение прицепа для поиска.',
+                reply_markup=main_btn()
+            )
+            bot.register_next_step_handler(msg, search_operation_step)
+        elif user_text == 'Создать прицеп':
+            msg = bot.send_message(
+                chat_id,
+                'Введите обозначение прицепа для создания. \n'
+                'Обозначение будет автоматически переведено как в 1С \n'
+                'Ожидание ввода...',
+                reply_markup=main_btn()
+            )
+            bot.register_next_step_handler(msg, intermediate_creation_step)
+        elif user_text == 'Главное меню':
+            markup = types.ReplyKeyboardRemove(selective=False)
+            msg = bot.send_message(
+                chat_id,
+                'Для возврата в главное меню используйте команду - /start',
+                reply_markup=markup
+            )
+        elif user_text.isdigit():
+            user_dict[chat_id] = Trouble(chat_id)
+            trouble = user_dict[chat_id]
+            trailer = db.search_trailer(user_text)
+            trouble.trailer_id = message.text
+            markup = types.ReplyKeyboardRemove(selective=False)
+            msg = bot.send_message(
+                message.chat.id,
+                f'Вы выбрали прицеп: {trailer[0]} \n'
+                'Для внесения проблемы выберите соответствующую '
+                'кнопку под клавиатурой \n',
+                reply_markup=main_trouble_btn()
+            )
+            bot.register_next_step_handler(msg, create_trouble_step)
+        else:
+            msg = bot.send_message(
+                chat_id,
+                'Функция, в которой вы находитесь, ожидает на вход \n'
+                'либо порядковый номер прицепа из списка, '
+                'либо команду с кнопок под клавиатурой. \n'
+                'Воспользуйтесь кнопкой найти чтобы узнать порядковый номер. \n'
+                'Выберите действие:',
+                reply_markup=search_create_trailer_btn()
+                )
+            bot.register_next_step_handler(msg, new_create_operation_step)
+    except IndexError:
+        msg = bot.send_message(
+            message.chat.id,
+            'Прицепа с таким номером нет в списке \n'
+            'Воспользуйтесь кнопками ввода для выбор действия \n'
+            'Или введите номер прицепа',
+            reply_markup=search_create_trailer_btn()
+            )
+        bot.register_next_step_handler(msg, new_create_operation_step)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {new_create_operation_step.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
+
+
+def search_operation_step(message):
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        if user_text == 'Главное меню':
+            markup = types.ReplyKeyboardRemove(selective=False)
+            msg = bot.send_message(
+                chat_id,
+                'Для возврата в главное меню используйте команду - /start',
+                reply_markup=markup
+            )
+        else:
+            bot.reply_to(
+                message,
+                'Начинаю процесс поиска по запросу.'
+                )
+            designation = user_text
+            if len(designation.split('-')) > 2:
+                designation = transform_to_1c(message.text)
+            list_trailers = db.search_designation_trailer(designation)
+            find_trailers = ''
+            for trailer in list_trailers:
+                srt_trailer = (str(trailer) + ' \n')
+                find_trailers += srt_trailer
             bot.send_message(
                 chat_id,
-                'Вы выбрали создание записи. Загружаю список прицепов...'
+                f'{find_trailers}'
             )
-            list_trailers = db.read_trailers()
-            for trailer in list_trailers:
-                bot.send_message(
-                    chat_id,
-                    f'{trailer}'
-                )
-            # markup = types.ReplyKeyboardRemove(selective=False)
             msg = bot.send_message(
                 chat_id,
-                'Прицеп уже есть в доступном списке ?',
-                reply_markup=choose_markup()
-            )
-            bot.register_next_step_handler(msg, create_operation_step)
-        except Exception:
-            bot.reply_to(message, 'На этапе создания записи произошла ошибка.')
-
-
-# Прицеп есть в доступном списке--> Либо есть либо нет.
-def create_operation_step(message):
-    # Прицеп есть в списке.
-    if message.text == 'Да':
-        try:
-            # markup = types.ReplyKeyboardRemove(selective=False)
-            msg = bot.send_message(
-                message.chat.id,
-                'Для дальнейшего создания записи введите \n'
+                'Поиск завершен. \n'
+                'Для создания записи по прицепу из списка введите '
                 'порядковый номер прицепа \n'
-                '(из списка: первый параметр в скобках без кавычек - число) \n',
-                reply_markup=step_back()
+                '(из списка: первый параметр в скобках без кавычек - число) \n'
+                'Либо повторите поиск или создайте новый прицеп с помощью '
+                'кнопок.',
+                reply_markup=search_create_trailer_btn()
             )
-            bot.register_next_step_handler(msg, create_operation_trailer_step)
-        except Exception:
-            bot.reply_to(message,
-                         'Критическая ошибка! \n'
-                         'Главное меню - /start'
-                         )
-    # Прицеп отсутствует в списке.
-    elif message.text == 'Нет':
-        try:
-            markup = types.ReplyKeyboardRemove(selective=False)
-            msg = bot.send_message(
-                message.chat.id,
-                'Введите обозначение прицепа \n'
-                'Обозначение будет автоматически переведено как в 1С',
-                reply_markup=markup
-            )
-            bot.register_next_step_handler(msg, intermediate_func)
-        except Exception:
-            bot.reply_to(message,
-                         'Критическая ошибка! \n'
-                         'Главное меню - /start'
-                         )
-    elif message.text == 'Главное меню':
-        try:
-            markup = types.ReplyKeyboardRemove(selective=False)
-            msg = bot.send_message(
-                message.chat.id,
-                'Для возврата используйте команду - /start',
-                reply_markup=markup
-            )
-        except Exception:
-            bot.reply_to(message,
-                         'Критическая ошибка! \n'
-                         'Главное меню - /start'
-                         )
-    else:
-        bot.reply_to(message,
-                     'Ошибка! Используйте кнопки под строкой ввода \n'
-                     'Прицеп уже есть в доступном списке ?',
-                     reply_markup=choose_markup()
-                     )
-        bot.register_next_step_handler(message, create_operation_step)
-
-
-# Прицеп отсутствует в доступном списке --> Создание прицепа
-def intermediate_func(message):
-    try:
-        chat_id_trailer = message.chat.id
-        user_dict[chat_id_trailer] = Trailer(message.chat.id)
-        trailer = user_dict[chat_id_trailer]
-        trailer.designation = transform_to_1c(message.text)
+            bot.register_next_step_handler(msg, new_create_operation_step)
+    except ApiTelegramException as err:
+        err = err.result_json['description']
         bot.send_message(
             message.chat.id,
-            'Подтвердите ввод обозначения прицепа'
+            'Ошибка! \n'
+            f'Функция: {search_operation_step.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
+        if err == TOO_LONG:
+            bot.reply_to(
+                message,
+                'Длинна ответа на поиск по запросу превысила 4096 символов! \n'
+                'Уточните поиск'
+            )
+        elif err == IS_EMPTY:
+            bot.reply_to(
+                message,
+                'Ничего не найдено \n'
+                'Уточните поиск'
             )
         msg = bot.send_message(
             message.chat.id,
-            f'Вы ввели: {trailer.designation}',
-            reply_markup=choose_markup()
+            'Уточните поиск или создайте новый прицеп',
+            reply_markup=search_create_trailer_btn()
+        )
+        bot.register_next_step_handler(msg, new_create_operation_step)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {search_operation_step.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
             )
-        bot.register_next_step_handler(msg, confirm_intermediate_func)
-    except Exception:
-        bot.reply_to(message,
-                     'Ошибка! \n'
-                     'Не забывай про тире \n'
-                     'Например 99064-100-01 \n'
-                     'Вводи по новой, я жду'
-                     )
-        bot.register_next_step_handler(message, intermediate_func)
 
 
-# Создание прицепа --> Подтверждение создания
+def intermediate_creation_step(message):
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        if user_text == 'Главное меню':
+            markup = types.ReplyKeyboardRemove(selective=False)
+            msg = bot.send_message(
+                chat_id,
+                'Для возврата в главное меню используйте команду - /start',
+                reply_markup=markup
+            )
+        else:
+            user_dict[chat_id] = Trailer(chat_id)
+            trailer = user_dict[chat_id]
+            trailer.designation = transform_to_1c(user_text)
+            bot.send_message(
+                message.chat.id,
+                'Подтвердите ввод обозначения прицепа'
+                )
+            msg = bot.send_message(
+                message.chat.id,
+                f'Вы ввели: {trailer.designation}',
+                reply_markup=choose_markup()
+                )
+            bot.register_next_step_handler(msg, confirm_intermediate_func)
+    except IndexError:
+        bot.send_message(
+            message.chat.id,
+            'Скорее всего при внесении обозначения прицепа вы '
+            'забыли про знак "-" \n'
+            'Попробуйте еще раз. \n'
+            )
+        msg = bot.send_message(
+            message.chat.id,
+            'Введите обозначение прицепа для создания. \n'
+            'Обозначение будет автоматически переведено как в 1С',
+        )
+        bot.register_next_step_handler(msg, intermediate_creation_step)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {intermediate_creation_step.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
+
+
 def confirm_intermediate_func(message):
-    if message.text == 'Да':
-        try:
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        if user_text == 'Да':
             markup1 = types.ReplyKeyboardRemove(selective=False)
-            chat_id_trailer = message.chat.id
-            trailer = user_dict[chat_id_trailer]
+            trailer = user_dict[chat_id]
             designation = trailer.designation
             db.create_trailer(designation)
             bot.send_message(
@@ -163,164 +266,119 @@ def confirm_intermediate_func(message):
                 'Для продолжения нажмите кнопку с цифрой...',
                 reply_markup=markup2
             )
-            bot.register_next_step_handler(msg, create_operation_trailer_step)
-        except Exception:
-            # СЮДА ДОПИСАТЬ ДВА ОБРАБОТЧИКА
-            # ОДИН НА ЛОГИКУ ПРОВЕРКИ ВВОДА НОМЕРА ПРИЦЕПА
-            # ВТОРОЙ НА ЛОГИКУ ПРОВЕРКИ НАЛИЧИЯ ТАКОГО ПРИЦЕПА В БАЗЕ
-            bot.reply_to(message,
-                         'Прицеп не может быть создан \n'
-                         'Вероятная причина - такой прицеп уже есть',
-                         )
-            chat_id = message.chat.id
-            bot.send_message(
-                chat_id,
-                'Загружаю список прицепов...'
-            )
-            list_trailers = db.read_trailers()
-            for trailer in list_trailers:
-                bot.send_message(
-                    chat_id,
-                    f'{trailer}'
-                )
-            # markup = types.ReplyKeyboardRemove(selective=False)
-            msg = bot.send_message(
-                chat_id,
-                'Прицеп уже есть в доступном списке ?',
-                reply_markup=choose_markup()
-            )
-            bot.register_next_step_handler(msg, create_operation_step)
-    elif message.text == 'Нет':
-        try:
-            bot.send_message(
-                message.chat.id,
-                'Для возврата на шаг "ввод обозначения прицепа" \n'
-                'Нажмите кнопку "Нет" повторно.',
-                reply_markup=no_btn()
-            )
-            bot.register_next_step_handler(message, create_operation_step)
-        except Exception:
-            bot.reply_to(message, 'Что то пошло не так...')
-    elif message.text == 'Шаг назад':
-        try:
-            bot.send_message(
-                message.chat.id,
-                'Нажмите кнопку "Шаг назад"',
-                reply_markup=step_back()
-            )
-            bot.register_next_step_handler(message, process_operation_step)
-        except Exception:
-            bot.reply_to(message, 'Что то пошло не так...')
-    elif message.text == 'Главное меню':
-        try:
+            bot.register_next_step_handler(msg, new_create_operation_step)
+        elif user_text == 'Главное меню':
             markup = types.ReplyKeyboardRemove(selective=False)
             msg = bot.send_message(
-                message.chat.id,
-                'Для возврата используйте команду - /start',
+                chat_id,
+                'Для возврата в главное меню используйте команду - /start',
                 reply_markup=markup
             )
-        except Exception:
-            bot.reply_to(message,
-                         'Критическая ошибка! \n'
-                         'Главное меню - /start'
-                         )
-    else:
-        bot.reply_to(message,
-                     'Ошибка! Используйте кнопки под строкой ввода \n'
-                     'Подтвердите ввод обозначения прицепа',
-                     reply_markup=choose_markup()
-                     )
-        bot.register_next_step_handler(message, confirm_intermediate_func)
-
-
-# Выбор виновника --> Внесение данных для записи
-def create_operation_trailer_step(message):
-    if message.text == 'Шаг назад':
-        try:
-            bot.send_message(
-                message.chat.id,
-                'Для возврата на шаг "список прицепов" \n'
-                'Нажмите кнопку "Шаг назад" повторно.',
-                reply_markup=step_back()
+        elif user_text == 'Нет':
+            markup = types.ReplyKeyboardRemove(selective=False)
+            msg = bot.send_message(
+                chat_id,
+                'Выберите действие с помощью кнопок под клавиатурой',
+                reply_markup=search_create_trailer_btn()
             )
-            bot.register_next_step_handler(message, process_operation_step)
-        except Exception:
-            bot.reply_to(message,
-                         'Критическая ошибка! \n'
-                         'Главное меню - /start'
-                         )
-    else:
-        try:
-            if message.text == 'Нет':
-                chat_id = message.chat.id
-                trouble = user_dict[chat_id]
-                if trouble.trailer_id:
-                    trailer = db.search_trailer(trouble.trailer_id)
-                    markup = types.ReplyKeyboardRemove(selective=False)
-                    msg = bot.send_message(
-                        message.chat.id,
-                        f'Вы выбрали прицеп: {trailer[0]} \n'
-                        'Введите проблему \n',
-                        reply_markup=markup
-                    )
-                    bot.register_next_step_handler(msg, create_trouble_to_database)
-            else:
-                chat_id = message.chat.id
-                user_dict[chat_id] = Trouble(message.chat.id)
-                trouble = user_dict[chat_id]
-                trailer = db.search_trailer(message.text)
-                trouble.trailer_id = message.text
-                markup = types.ReplyKeyboardRemove(selective=False)
-                msg = bot.send_message(
-                    message.chat.id,
-                    f'Вы выбрали прицеп: {trailer[0]} \n'
-                    'Введите проблему \n',
-                    reply_markup=markup
-                )
-                bot.register_next_step_handler(msg, create_trouble_to_database)
-            # list_causers = db.read_causers()
-            # for causer in list_causers:
-            #     bot.send_message(
-            #         message.chat.id,
-            #         f'{causer}'
-            #     )
-        except Exception:
-            bot.reply_to(message,
-                         'Ошибка! \n'
-                         'Введите порядковый номер прицепа из списка \n'
-                         'Либо вернитесь на шаг назад с помощью кнопки \n',
-                         reply_markup=step_back())
-            bot.register_next_step_handler(message, create_operation_trailer_step)
+            bot.register_next_step_handler(msg, new_create_operation_step)
+    except (
+        sqlite3.Error,
+        sqlite3.Warning,
+        sqlite3.IntegrityError
+    ) as err:
+        msg = bot.send_message(
+            message.chat.id,
+            f'{err} \n'
+            'Такой прицеп есть в базе данных \n'
+            'Уточните поиск или создайте новый прицеп \n',
+            reply_markup=search_create_trailer_btn()
+        )
+        bot.register_next_step_handler(msg, new_create_operation_step)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {confirm_intermediate_func.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
+# =================================================================================================================================================
+# Конец первого блока создания. Прицеп либо создан а потом выбран, либо просто выбран.
+# Из первого блока выходит команда на внесение проблемы
+
+
+# Начало второго блока создания. Создание проблемы. На вход приходит команда на проблему
+# =================================================================================================================================================
+def create_trouble_step(message):
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        if user_text == 'Главное меню':
+            markup = types.ReplyKeyboardRemove(selective=False)
+            bot.send_message(
+                chat_id,
+                'Для возврата в главное меню используйте команду - /start',
+                reply_markup=markup
+            )
+        else:
+            msg = bot.send_message(
+                message.chat.id,
+                'Сейчас можно внести проблему по выбранному прицепу \n'
+                'Ожидание ввода...',
+                reply_markup=main_btn()
+            )
+            bot.register_next_step_handler(msg, create_trouble_to_database)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {create_trouble_step.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
 
 
 def create_trouble_to_database(message):
     try:
         chat_id = message.chat.id
-        trouble = user_dict[chat_id]
-        trouble.user_id = chat_id
-        problem = message.text
-        trouble.problem = problem
-        bot.send_message(
-            message.chat.id,
-            'Подтвердите ввод проблемы'
+        user_text = message.text
+        if user_text == 'Главное меню':
+            markup = types.ReplyKeyboardRemove(selective=False)
+            bot.send_message(
+                chat_id,
+                'Для возврата в главное меню используйте команду - /start',
+                reply_markup=markup
             )
-        msg = bot.send_message(
-            message.chat.id,
-            f'Вы ввели: {trouble.problem}',
-            reply_markup=choose_markup()
+        else:
+            trouble = user_dict[chat_id]
+            trouble.user_id = chat_id
+            trouble.problem = user_text
+            bot.send_message(
+                message.chat.id,
+                'Подтвердите ввод проблемы'
+                )
+            msg = bot.send_message(
+                message.chat.id,
+                f'Вы ввели: {trouble.problem}',
+                reply_markup=choose_markup()
+                )
+            bot.register_next_step_handler(msg, confirm_trouble_to_database)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {create_trouble_to_database.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
             )
-        bot.register_next_step_handler(msg, confirm_trouble_to_database)
-    except Exception:
-        bot.reply_to(message,
-                     'Критическая ошибка! \n'
-                     'Главное меню - /start'
-                     )
 
 
 def confirm_trouble_to_database(message):
-    if message.text == 'Да':
-        try:
-            chat_id = message.chat.id
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        if user_text == 'Да':
             trouble = user_dict[chat_id]
             trailer = db.search_trailer(trouble.trailer_id)
             trouble.date = str(datetime.now().date())
@@ -332,8 +390,10 @@ def confirm_trouble_to_database(message):
                 status = 'Проблема решена'
             if trouble.causer_id is None:
                 causer = None
+            else:
+                causer = db.search_causer_name(trouble.causer_id)[0]
             bot.send_message(
-                message.chat.id,
+                chat_id,
                 'Запись для внесения в базу данных: \n'
                 f'Дата: {trouble.date} \n'
                 f'Номер заказа: {trouble.order_num} \n'
@@ -343,47 +403,59 @@ def confirm_trouble_to_database(message):
                 f'Прицеп: {trailer[0]} \n'
                 f'Виновник: {causer} \n'
                 f'Смена: {message.from_user.last_name} \n'
-                'Чтобы дополнить запись выберите соответствующую кнопку для ввода. \n'
+            )
+            bot.send_message(
+                chat_id,
+                'Чтобы дополнить запись выберите соответствующую '
+                'кнопку для ввода. \n'
                 'Чтобы внести запись в базу данных нажмите "Внести запись" \n',
                 reply_markup=create_markup()
             )
             bot.register_next_step_handler(message, write_trouble_to_database)
-        except Exception:
-            bot.reply_to(message,
-                         'Критическая ошибка! \n'
-                         'Главное меню - /start'
-                         )
-    elif message.text == 'Нет':
-        try:
-            bot.send_message(
+        elif user_text == 'Нет':
+            msg = bot.send_message(
                 message.chat.id,
                 'Для возврата на шаг "ввод проблемы" \n'
-                'Нажмите кнопку "Нет" повторно.',
-                reply_markup=no_btn()
+                'Нажмите кнопку "Внести проблему"',
+                reply_markup=main_trouble_btn()
             )
-            bot.register_next_step_handler(message, create_operation_trailer_step)
-        except Exception:
-            bot.reply_to(message,
-                         'Критическая ошибка! \n'
-                         'Главное меню - /start'
-                         )
-    else:
-        bot.reply_to(message,
-                     'Ошибка! \n'
-                     'Подтвердите ввод проблемы \n'
-                     'Используйте кнопки под клавиатурой',
-                     reply_markup=choose_markup()
-                     )
-        bot.register_next_step_handler(message, confirm_trouble_to_database)
+            bot.register_next_step_handler(msg, create_trouble_step)
+        elif user_text == 'Главное меню':
+            markup = types.ReplyKeyboardRemove(selective=False)
+            bot.send_message(
+                chat_id,
+                'Для возврата в главное меню используйте команду - /start',
+                reply_markup=markup
+            )
+        else:
+            bot.reply_to(
+                message,
+                'Ошибка! \n'
+                'Подтвердите ввод проблемы \n'
+                'Используйте кнопки под клавиатурой',
+                reply_markup=choose_markup()
+            )
+            bot.register_next_step_handler(message, confirm_trouble_to_database)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {confirm_trouble_to_database.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
+# Конец второго блока создания. Создана проблема и прицеп
+# =================================================================================================================================================
 
-# ===================================================================================================================
 
-
+# Начало третьего блока создания. Корретировка записи
+# =================================================================================================================================================
 def write_trouble_to_database(message):
-    if message.text == 'Внести запись':
-        try:
-            chat_id = message.chat.id
-            trouble = user_dict[chat_id]
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        trouble = user_dict[chat_id]
+        if user_text == 'Внести запись':
             create_list = [
                 trouble.date,
                 trouble.order_num,
@@ -402,154 +474,172 @@ def write_trouble_to_database(message):
                 'Главное меню - /start',
                 reply_markup=markup
             )
-        except Exception:
-            bot.reply_to(message,
-                         'Запись не внесена \n'
-                         'Попробуйте еще раз \n'
-                         'Главное меню - /start'
-                         )
-    elif message.text == 'Номер заказа':
-        try:
+        elif user_text == 'Номер заказа':
+            markup = types.ReplyKeyboardRemove(selective=False)
             bot.send_message(
                 message.chat.id,
-                'Введите номер заказа',
+                'Введите номер заказа \n'
+                'Ожидание ввода...',
+                reply_markup=markup
             )
             bot.register_next_step_handler(message, create_order_num)
-        except Exception:
-            pass
+        elif user_text == 'Документ (СЗ)':
+            markup = types.ReplyKeyboardRemove(selective=False)
+            bot.send_message(
+                message.chat.id,
+                'Введите документ(СЗ) \n'
+                'Ожидание ввода...',
+                reply_markup=markup
+            )
+            bot.register_next_step_handler(message, create_document)
+        elif user_text == 'Статус проблемы':
+            bot.send_message(
+                message.chat.id,
+                'Для выбора статуса проблемы воспользуйтесь кнопками ввода',
+                reply_markup=status_trouble_btn()
+            )
+            bot.register_next_step_handler(message, create_status)
+        elif user_text == 'Виновник':
+            bot.send_message(
+                message.chat.id,
+                'Для выбора виновника воспользуйтесь кнопками ввода',
+                reply_markup=choose_causer()
+            )
+            bot.register_next_step_handler(message, create_causer)
+        else:
+            msg = bot.send_message(
+                chat_id,
+                'Функция, в которой вы находитесь, ожидает на вход: \n'
+                '1. Либо варианты добавления в запись различных полей: '
+                'Номер заказа, Документ (СЗ), Статус проблемы, Виновник, '
+                'Внести запись. \n'
+                '2. Либо внесение записи в базу данных, так же с помощью '
+                'соответствующей команды. '
+                'Воспользуйтесь кнопками под клавиатурой чтобы выбрать '
+                'действие. \n'
+                'Выберите действие:',
+                reply_markup=create_markup()
+                )
+            bot.register_next_step_handler(msg, write_trouble_to_database)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {write_trouble_to_database.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
 
 
 def create_order_num(message):
     try:
         chat_id = message.chat.id
+        user_text = message.text
         trouble = user_dict[chat_id]
-        trouble.order_num = message.text
-        bot.send_message(
-            message.chat.id,
-            'Подтвердите ввод заказа'
-            )
-        msg = bot.send_message(
-            message.chat.id,
-            f'Вы ввели: {trouble.order_num}',
-            reply_markup=choose_markup()
-        )
-        if msg.text == 'Да':
-            bot.send_message(
-                message.chat.id,
-                'kek'
-                )
-    except Exception:
-        bot.reply_to(message,
-                     'Критическая ошибка! \n'
-                     'Главное меню - /start'
-                     )
-
-
-# Внесение данных для записи --> Внесение в базу данных
-def create_operation_causer_step(message):
-    try:
-        chat_id = message.chat.id
-        trouble = user_dict[chat_id]
-        causer = db.search_causer(message.text)
-        trouble.causer_id = message.text
-        bot.send_message(
-            message.chat.id,
-            f'Вы выбрали виновника: {causer[0]} \n'
-            'Для внесения записи необходимо внести данные в формате: \n'
-            'Заказ|Описание проблемы|СЗ для решения|'
-            'Статус проблемы \n'
-            'Пояснение по статусу проблемы, если СЗ решает проблему '
-            'и она больше не повторится вносим цифру 1, если проблема требует '
-            'дальнейшего изменения в КД и не решена то вносим цифру 0. \n'
-            'Пример ввода записи: '
-        )
-        bot.send_message(
-            message.chat.id,
-            '460/1|Не заложили в ЗИП ручку от трамвая|Без СЗ, '
-            'выдали со склада|0'
-        )
-        msg = bot.send_message(
-            message.chat.id,
-            'Ожидание ввода ...'
-        )
-        bot.register_next_step_handler(msg, final_create_operation)
-    except Exception:
-        bot.reply_to(message, 'Что то пошло не так...')
-
-
-def final_create_operation(message):
-    try:
-        chat_id = message.chat.id
-        trouble = user_dict[chat_id]
-        trouble.date = str(datetime.now().date())
-        trouble.user_id = chat_id
-        problem = message.text
-        problem_split = problem.split('|')
-        trouble.order_num = problem_split[0]
-        trouble.problem = problem_split[1]
-        trouble.document = problem_split[2]
-        trouble.status = problem_split[3]
-        if trouble.status == 1:
-            status = 'Проблема решена'
-        else:
-            status = 'Требует решения'
-        trailer = db.search_trailer(trouble.trailer_id)
-        causer = db.search_causer(trouble.causer_id)
-        bot.send_message(
-            message.chat.id,
-            'Запись для внесения в базу данных: \n'
-            f'Дата: {trouble.date} \n'
-            f'Номер заказа: {trouble.order_num} \n'
-            f'Проблема: {trouble.problem} \n'
-            f'Документ: {trouble.document} \n'
-            f'Статус проблемы: {status} \n'
-            f'Прицеп: {trailer[0]} \n'
-            f'Виновник: {causer[0]} \n'
-            f'Смена: {message.from_user.last_name} \n'
-        )
-        markup = types.ReplyKeyboardMarkup(
-            resize_keyboard=True,
-            row_width=2
-            )
-        itempbtn1 = types.KeyboardButton('Подтвердить')
-        itempbtn2 = types.KeyboardButton('/start')
-        markup.add(itempbtn1, itempbtn2)
+        trouble.order_num = user_text
         msg = bot.send_message(
             chat_id,
-            'Если данные верны нажмите подтвердить \n'
-            'Если допущена ошибка, то пройдите процесс создания '
-            'записи из главного меню с самого начала.',
-            reply_markup=markup
+            f'Номер заказа: {trouble.order_num} \n'
+            'Для возврата на этап формирования записи нажмите "Да" '
+            'или вернитесь в главное меню.',
+            reply_markup=yes_main_menu_btns()
         )
-        bot.register_next_step_handler(msg, confirm_final_create_operation)
-    except Exception:
-        bot.reply_to(message, 'Что то пошло не так...')
+        bot.register_next_step_handler(msg, confirm_trouble_to_database)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {create_order_num.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
 
 
-def confirm_final_create_operation(message):
+def create_document(message):
     try:
         chat_id = message.chat.id
+        user_text = message.text
         trouble = user_dict[chat_id]
-        create_list = [
-            trouble.date,
-            trouble.order_num,
-            trouble.problem,
-            trouble.document,
-            trouble.status,
-            trouble.trailer_id,
-            trouble.causer_id,
-            trouble.user_id,
-        ]
-        db.create_trouble(create_list)
-        markup = types.ReplyKeyboardRemove(selective=False)
-        bot.send_message(
-            message.chat.id,
-            'Запись успешно внесена в базу данных!',
-            reply_markup=markup
+        trouble.document = user_text
+        msg = bot.send_message(
+            chat_id,
+            f'Документ: {trouble.document} \n'
+            'Для возврата на этап формирования записи нажмите "Да" '
+            'или вернитесь в главное меню.',
+            reply_markup=yes_main_menu_btns()
         )
-        bot.send_message(
-            message.chat.id,
-            '/start'
+        bot.register_next_step_handler(msg, confirm_trouble_to_database)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {create_document.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
+
+
+def create_status(message):
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        if user_text == 'Решена' or user_text == 'Требует решения':
+            if user_text == 'Решена':
+                status = 1
+            elif user_text == 'Требует решения':
+                status = 0
+            trouble = user_dict[chat_id]
+            trouble.status = status
+            msg = bot.send_message(
+                chat_id,
+                f'Статус проблемы: {user_text} \n'
+                'Для возврата на этап формирования записи нажмите "Да" '
+                'или вернитесь в главное меню.',
+                reply_markup=yes_main_menu_btns()
+            )
+            bot.register_next_step_handler(msg, confirm_trouble_to_database)
+        else:
+            msg = bot.send_message(
+                chat_id,
+                'Функция, в которой вы находитесь, ожидает на вход '
+                'команду с кнопок под клавиатурой \n'
+                'Выберите действие:',
+                reply_markup=status_trouble_btn()
+            )
+            bot.register_next_step_handler(msg, create_status)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {create_status.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
+
+
+def create_causer(message):
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        causer_id = db.search_causer_id(user_text)[0]
+        trouble = user_dict[chat_id]
+        trouble.causer_id = causer_id
+        causer = db.search_causer_name(trouble.causer_id)[0]
+        msg = bot.send_message(
+            chat_id,
+            f'Виновник: {causer} \n'
+            'Для возврата на этап формирования записи нажмите "Да" '
+            'или вернитесь в главное меню.',
+            reply_markup=yes_main_menu_btns()
         )
-    except Exception:
-        bot.reply_to(message, 'Что то пошло не так...')
+        bot.register_next_step_handler(msg, confirm_trouble_to_database)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {create_causer.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
+            )
+# Конец третьего блока.
+# =================================================================================================================================================

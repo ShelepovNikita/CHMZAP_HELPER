@@ -78,19 +78,21 @@ class Database:
                 (designation,)).fetchall()
         return select_trailer[0]
 
-    # Список виновников
-    def read_causers(self):
+    # Поиск виновника id
+    def search_causer_id(self, name):
         with self.con:
-            list_causers = self.cur.execute('SELECT id, name FROM causers').fetchall()
-        return list_causers
+            causer_id = self.cur.execute(
+                'SELECT id FROM causers WHERE name = ?;',
+                (name,)).fetchall()
+        return causer_id[0]
 
-    # Поиск виновника
-    def search_causer(self, id):
+    # Поиск виновника name
+    def search_causer_name(self, id):
         with self.con:
-            select_causer = self.cur.execute(
+            causer_name = self.cur.execute(
                 'SELECT name FROM causers WHERE id = ?;',
                 (id,)).fetchall()
-        return select_causer[0]
+        return causer_name[0]
 
     # Поиск пользователя
     def search_user(self, external_id):
@@ -113,3 +115,11 @@ class Database:
             self.cur.execute(
                 'INSERT INTO trailers(designation) VALUES(?)',
                 (designation,))
+
+    def search_designation_trailer(self, designation):
+        designation = ('%' + designation + '%')
+        with self.con:
+            result = self.cur.execute(
+                'SELECT id, designation FROM trailers WHERE designation LIKE ?;',
+                (designation,)).fetchall()
+        return result
