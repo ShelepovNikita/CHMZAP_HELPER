@@ -29,8 +29,7 @@ def choose_causer():
     itempbtn1 = types.KeyboardButton('КО')
     itempbtn2 = types.KeyboardButton('Производство')
     itempbtn3 = types.KeyboardButton('Снабжение')
-    itempbtn4 = types.KeyboardButton('Шаг назад')
-    markup.add(itempbtn1, itempbtn2, itempbtn3, itempbtn4)
+    markup.add(itempbtn1, itempbtn2, itempbtn3)
     return markup
 
 
@@ -82,5 +81,45 @@ def status_trouble_btn():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     itempbtn1 = types.KeyboardButton('Решена')
     itempbtn2 = types.KeyboardButton('Требует решения')
+    markup.add(itempbtn1, itempbtn2)
+    return markup
+
+
+def email_btn():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    itempbtn1 = types.KeyboardButton('Внести адрес почты')
+    markup.add(itempbtn1)
+    return markup
+
+
+def read_markup():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
+    itempbtn1 = types.KeyboardButton('Выбрать прицеп')
+    itempbtn2 = types.KeyboardButton('Выбрать отчет')
+    itempbtn3 = types.KeyboardButton('Главное меню')
+    markup.add(itempbtn1, itempbtn2, itempbtn3)
+    return markup
+
+
+def main_search_btn():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
+    itempbtn1 = types.KeyboardButton('Главное меню')
+    itempbtn2 = types.KeyboardButton('Повторить поиск')
+    markup.add(itempbtn1, itempbtn2)
+    return markup
+
+
+def trailer_report():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    itempbtn1 = types.KeyboardButton('Все ошибки')
+    itempbtn2 = types.KeyboardButton('Главное меню')
+    markup.add(itempbtn1, itempbtn2)
+    return markup
+
+
+def abort_trailer_search():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
+    itempbtn1 = types.KeyboardButton('Выбрать прицеп')
+    itempbtn2 = types.KeyboardButton('Главное меню')
     markup.add(itempbtn1, itempbtn2)
     return markup

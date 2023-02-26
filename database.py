@@ -15,7 +15,8 @@ class Database:
                 id INTEGER PRIMARY KEY,
                 external_id INTEGER,
                 first_name TEXT,
-                last_name TEXT);
+                last_name TEXT,
+                work_email TEXT);
             CREATE TABLE IF NOT EXISTS trailers (
                 id INTEGER PRIMARY KEY,
                 designation TEXT UNIQUE);
@@ -56,10 +57,27 @@ class Database:
                 (user_id,)).fetchall()
         return bool(len(result))
 
+    # Поиск почты
+    def check_email(self, user_id):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT work_email FROM users WHERE external_id = ?;',
+                (user_id,)).fetchall()[0]
+        return result[0]
+
+    # Создание почты
+    def create_email(self, email, user_id):
+        with self.con:
+            self.cur.execute(
+                'UPDATE users SET work_email=? WHERE external_id=?',
+                (email, user_id))
+
     # Список прицепов
     def read_trailers(self):
         with self.con:
-            list_trailers = self.cur.execute('SELECT id, designation FROM trailers').fetchall()
+            list_trailers = self.cur.execute(
+                'SELECT id, designation FROM trailers'
+                ).fetchall()
         return list_trailers
 
     # Поиск прицепа по id
@@ -123,3 +141,46 @@ class Database:
                 'SELECT id, designation FROM trailers WHERE designation LIKE ?;',
                 (designation,)).fetchall()
         return result
+
+# Функции для скрпита парсинга таблиц экселя
+# ===================================================================================
+    def script_trailer_id(self, designation):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT * FROM trailers WHERE designation = ?;',
+                (designation,)).fetchall()
+        return result[0]
+
+    def script_causer_id(self, name):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT * FROM causers WHERE name = ?;',
+                (name,)).fetchall()
+        if result == []:
+            result = ' '
+        else:
+            result = result[0]
+        return result
+
+    def script_user_external_id(self, last_name):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT external_id, last_name FROM users WHERE last_name = ?;',
+                (last_name,)).fetchall()
+        return result[0]
+# ===================================================================================
+
+    def search_by_trailer_in_troubles(self, id):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT * FROM troubles WHERE trailer_id = ?;',
+                (id,)).fetchall()
+        return result
+
+    # Поиск пользователя, фамилия
+    def search_user_last_name(self, external_id):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT last_name FROM users WHERE external_id = ?;',
+                (external_id,)).fetchall()
+        return result[0]

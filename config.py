@@ -8,6 +8,9 @@ key = ['CHMZAP']
 bot = telebot.TeleBot(TOKEN, threaded=False)
 db = database.Database('chmzap_sq.sqlite')
 
+sender = 'chmzap.helper@gmail.com'
+password = 'aqosuhvcoztgwpme'
+
 # connection_config_dict = {
 #     'user': 'ShelepovFamily',
 #     'password': 'CHMZAP100-01',

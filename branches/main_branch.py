@@ -1,9 +1,11 @@
 
 from config import bot
 from markups import (
-    search_create_trailer_btn
+    search_create_trailer_btn,
+    read_markup
     )
-from create_branch import new_create_operation_step
+from branches.create_branch import create_operation
+from branches.read_branch import read_operation
 
 
 def main_operation_step(message):
@@ -25,26 +27,34 @@ def main_operation_step(message):
                 'Выберите действие или введите порядковый номер прицепа:',
                 reply_markup=search_create_trailer_btn()
             )
-            bot.register_next_step_handler(msg, new_create_operation_step)
+            bot.register_next_step_handler(msg, create_operation)
         elif message.text == 'Чтение':
-            # user_dict[chat_id] = User(message.chat.id)
-            bot.send_message(
+            msg = bot.send_message(
                 chat_id,
-                'Вы выбрали чтение записей из базы данных.'
+                'Вы выбрали чтение записей из базы данных. \n'
+                'Для поиска проблем по конкретному прицепу '
+                'выберите прицеп. \n'
+                'Для формирования отчета за период выберите отчет. \n'
+                'Выберите действие:',
+                reply_markup=read_markup()
             )
-            # Место для следующего шага по чтению записей.
+            bot.register_next_step_handler(msg, read_operation)
         elif message.text == 'Редактирование':
             # user_dict[chat_id] = User(message.chat.id)
             bot.send_message(
                 chat_id,
-                'Вы выбрали редактирование записей в базе данных.'
+                'Вы выбрали редактирование записей в базе данных. \n'
+                'Раздел в разработке.'
+                '/start'
             )
             # Место для следующего шага по редактированию записей.
         elif message.text == 'Удаление':
             # user_dict[chat_id] = User(message.chat.id)
             bot.send_message(
                 chat_id,
-                'Вы выбрали удаление записей из базы данных.'
+                'Вы выбрали удаление записей из базы данных. \n'
+                'Раздел в разработке.'
+                '/start'
             )
             # Место для следующего шага по удалению записей.
         else:

@@ -45,7 +45,7 @@ class Trailer:
 
 # Начало первого блока создания. Поиск или создание прицепа
 # =================================================================================================================================================
-def new_create_operation_step(message):
+def create_operation(message):
     try:
         chat_id = message.chat.id
         user_text = message.text
@@ -64,7 +64,7 @@ def new_create_operation_step(message):
                 'Ожидание ввода...',
                 reply_markup=main_btn()
             )
-            bot.register_next_step_handler(msg, intermediate_creation_step)
+            bot.register_next_step_handler(msg, intermediate_search_step)
         elif user_text == 'Главное меню':
             markup = types.ReplyKeyboardRemove(selective=False)
             msg = bot.send_message(
@@ -76,7 +76,7 @@ def new_create_operation_step(message):
             user_dict[chat_id] = Trouble(chat_id)
             trouble = user_dict[chat_id]
             trailer = db.search_trailer(user_text)
-            trouble.trailer_id = message.text
+            trouble.trailer_id = user_text
             markup = types.ReplyKeyboardRemove(selective=False)
             msg = bot.send_message(
                 message.chat.id,
@@ -92,11 +92,12 @@ def new_create_operation_step(message):
                 'Функция, в которой вы находитесь, ожидает на вход \n'
                 'либо порядковый номер прицепа из списка, '
                 'либо команду с кнопок под клавиатурой. \n'
-                'Воспользуйтесь кнопкой найти чтобы узнать порядковый номер. \n'
+                'Воспользуйтесь кнопкой найти чтобы узнать '
+                'порядковый номер. \n'
                 'Выберите действие:',
                 reply_markup=search_create_trailer_btn()
                 )
-            bot.register_next_step_handler(msg, new_create_operation_step)
+            bot.register_next_step_handler(msg, create_operation)
     except IndexError:
         msg = bot.send_message(
             message.chat.id,
@@ -105,12 +106,12 @@ def new_create_operation_step(message):
             'Или введите номер прицепа',
             reply_markup=search_create_trailer_btn()
             )
-        bot.register_next_step_handler(msg, new_create_operation_step)
+        bot.register_next_step_handler(msg, create_operation)
     except Exception as err:
         bot.reply_to(
             message,
             'Ошибка! \n'
-            f'Функция: {new_create_operation_step.__name__} \n'
+            f'Функция: {create_operation.__name__} \n'
             f'{err} \n'
             'Вернитесь в главное меню - /start'
             )
@@ -133,7 +134,7 @@ def search_operation_step(message):
                 'Начинаю процесс поиска по запросу.'
                 )
             designation = user_text
-            if len(designation.split('-')) > 2:
+            if len(designation.split('-')) >= 2:
                 designation = transform_to_1c(message.text)
             list_trailers = db.search_designation_trailer(designation)
             find_trailers = ''
@@ -154,16 +155,9 @@ def search_operation_step(message):
                 'кнопок.',
                 reply_markup=search_create_trailer_btn()
             )
-            bot.register_next_step_handler(msg, new_create_operation_step)
+            bot.register_next_step_handler(msg, create_operation)
     except ApiTelegramException as err:
         err = err.result_json['description']
-        bot.send_message(
-            message.chat.id,
-            'Ошибка! \n'
-            f'Функция: {search_operation_step.__name__} \n'
-            f'{err} \n'
-            'Вернитесь в главное меню - /start'
-            )
         if err == TOO_LONG:
             bot.reply_to(
                 message,
@@ -173,15 +167,14 @@ def search_operation_step(message):
         elif err == IS_EMPTY:
             bot.reply_to(
                 message,
-                'Ничего не найдено \n'
-                'Уточните поиск'
+                'Ничего не найдено'
             )
         msg = bot.send_message(
             message.chat.id,
             'Уточните поиск или создайте новый прицеп',
             reply_markup=search_create_trailer_btn()
         )
-        bot.register_next_step_handler(msg, new_create_operation_step)
+        bot.register_next_step_handler(msg, create_operation)
     except Exception as err:
         bot.reply_to(
             message,
@@ -192,7 +185,7 @@ def search_operation_step(message):
             )
 
 
-def intermediate_creation_step(message):
+def intermediate_search_step(message):
     try:
         chat_id = message.chat.id
         user_text = message.text
@@ -216,7 +209,7 @@ def intermediate_creation_step(message):
                 f'Вы ввели: {trailer.designation}',
                 reply_markup=choose_markup()
                 )
-            bot.register_next_step_handler(msg, confirm_intermediate_func)
+            bot.register_next_step_handler(msg, confirm_search_step)
     except IndexError:
         bot.send_message(
             message.chat.id,
@@ -229,18 +222,18 @@ def intermediate_creation_step(message):
             'Введите обозначение прицепа для создания. \n'
             'Обозначение будет автоматически переведено как в 1С',
         )
-        bot.register_next_step_handler(msg, intermediate_creation_step)
+        bot.register_next_step_handler(msg, intermediate_search_step)
     except Exception as err:
         bot.reply_to(
             message,
             'Ошибка! \n'
-            f'Функция: {intermediate_creation_step.__name__} \n'
+            f'Функция: {intermediate_search_step.__name__} \n'
             f'{err} \n'
             'Вернитесь в главное меню - /start'
             )
 
 
-def confirm_intermediate_func(message):
+def confirm_search_step(message):
     try:
         chat_id = message.chat.id
         user_text = message.text
@@ -266,7 +259,7 @@ def confirm_intermediate_func(message):
                 'Для продолжения нажмите кнопку с цифрой...',
                 reply_markup=markup2
             )
-            bot.register_next_step_handler(msg, new_create_operation_step)
+            bot.register_next_step_handler(msg, create_operation)
         elif user_text == 'Главное меню':
             markup = types.ReplyKeyboardRemove(selective=False)
             msg = bot.send_message(
@@ -281,7 +274,7 @@ def confirm_intermediate_func(message):
                 'Выберите действие с помощью кнопок под клавиатурой',
                 reply_markup=search_create_trailer_btn()
             )
-            bot.register_next_step_handler(msg, new_create_operation_step)
+            bot.register_next_step_handler(msg, create_operation)
     except (
         sqlite3.Error,
         sqlite3.Warning,
@@ -294,21 +287,23 @@ def confirm_intermediate_func(message):
             'Уточните поиск или создайте новый прицеп \n',
             reply_markup=search_create_trailer_btn()
         )
-        bot.register_next_step_handler(msg, new_create_operation_step)
+        bot.register_next_step_handler(msg, create_operation)
     except Exception as err:
         bot.reply_to(
             message,
             'Ошибка! \n'
-            f'Функция: {confirm_intermediate_func.__name__} \n'
+            f'Функция: {confirm_search_step.__name__} \n'
             f'{err} \n'
             'Вернитесь в главное меню - /start'
             )
 # =================================================================================================================================================
-# Конец первого блока создания. Прицеп либо создан а потом выбран, либо просто выбран.
+# Конец первого блока создания. Прицеп либо создан а потом выбран,
+# либо просто выбран.
 # Из первого блока выходит команда на внесение проблемы
 
 
-# Начало второго блока создания. Создание проблемы. На вход приходит команда на проблему
+# Начало второго блока создания. Создание проблемы.
+# На вход приходит команда на проблему
 # =================================================================================================================================================
 def create_trouble_step(message):
     try:
@@ -435,7 +430,10 @@ def confirm_trouble_to_database(message):
                 'Используйте кнопки под клавиатурой',
                 reply_markup=choose_markup()
             )
-            bot.register_next_step_handler(message, confirm_trouble_to_database)
+            bot.register_next_step_handler(
+                message,
+                confirm_trouble_to_database
+                )
     except Exception as err:
         bot.reply_to(
             message,
@@ -633,6 +631,14 @@ def create_causer(message):
             reply_markup=yes_main_menu_btns()
         )
         bot.register_next_step_handler(msg, confirm_trouble_to_database)
+    except IndexError:
+        msg = bot.send_message(
+            message.chat.id,
+            'Ошибка ввода \n'
+            'Воспользуйтесь кнопками ввода для выбор действия \n',
+            reply_markup=choose_causer()
+            )
+        bot.register_next_step_handler(msg, create_causer)
     except Exception as err:
         bot.reply_to(
             message,

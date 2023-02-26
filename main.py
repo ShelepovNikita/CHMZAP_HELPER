@@ -1,33 +1,22 @@
 
-from flask import Flask, request
-import telebot
+# from flask import Flask, request
+# import telebot
 import time
-import random
-import string
-from markups import main_markup, choose_markup
-import config
-import database
-from datetime import datetime
-from telebot import types
-from main_branch import main_operation_step
-
+# import random
+# import string
 from config import bot, db
+# from config import URL
+from markups import main_markup
+from branches.main_branch import main_operation_step
 
 
 # secret = ''.join(random.choice(string.ascii_letters) for x in range(20))
-# bot = telebot.TeleBot(config.TOKEN, threaded=False)
-
-# db = database.Database('chmzap_sq.sqlite')
 
 # bot.remove_webhook()
 # time.sleep(1)
-# bot.set_webhook(url="https://{}.pythonanywhere.com/{}".format(
-    # config.URL, secret))
+# bot.set_webhook(url="https://{}.pythonanywhere.com/{}".format(URL, secret))
 
 # app = Flask(__name__)
-
-# Часть кода для pythonanywhere
-
 
 # @app.route('/{}'.format(secret), methods=["POST"])
 # def webhook():
@@ -71,7 +60,7 @@ def first_step(message):
             message,
             f'Функция: {first_step.__name__} \n'
             f'{Exception} \n'
-            f'Главное меню - /start'
+            'Главное меню - /start'
             )
 
 
@@ -92,16 +81,15 @@ def register_step(message):
             db.create_user(chat_id, first_name, last_name)
             bot.send_message(
                 message.chat.id,
-                'Регистрация успешна. Вы внесены в базу данных.',
-                reply_markup=main_markup()
+                'Регистрация успешна. Вы внесены в базу данных.'
+                'Главное меню - /start'
                 )
-            bot.register_next_step_handler(msg, main_operation_step)
     except Exception:
         bot.reply_to(
             message,
             f'Функция: {register_step.__name__} \n'
             f'{Exception} \n'
-            f'Главное меню - /start'
+            'Главное меню - /start'
             )
 
 
@@ -114,13 +102,13 @@ def text_filter(message):
             'Бот не поддерживает работу с текстом. \n'
             'Для дальнейшей работы вызовите главное меню \n'
             'Главное меню - /start'
-        )
+            )
     except Exception:
         bot.reply_to(
             message,
             f'Функция: {text_filter.__name__} \n'
             f'{Exception} \n'
-            f'Главное меню - /start'
+            'Главное меню - /start'
             )
 
 
