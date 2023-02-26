@@ -7,7 +7,6 @@ import pandas as pd
 # For windows
 # sys.path.append('C:/pet_Dev/CHMZAP_HELPER/chmzap_helper')
 from config import db
-import xlsxwriter as xl
 
 
 def create_user_folder(user_id):
@@ -17,9 +16,8 @@ def create_user_folder(user_id):
     return DIR
 
 
-def create_excel(request_from_user, user_folder):
+def create_excel(result, user_folder):
     try:
-        result = db.search_by_trailer_in_troubles(request_from_user)
         names_of_columns = (
             'Номер в базе данных',
             'Дата',

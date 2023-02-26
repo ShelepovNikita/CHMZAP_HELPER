@@ -30,23 +30,74 @@ def read_operation(message):
     try:
         chat_id = message.chat.id
         user_text = message.text
-        if user_text == 'Выбрать прицеп':
+        if db.check_email(chat_id) is None:
             msg = bot.send_message(
                 chat_id,
-                'Введите обозначение прицепа для поиска. \n'
+                'Мне нужно знать куда направлять отчет \n'
+                'Для дальнейшей работы введите адрес '
+                'рабочей электронной почты. \n'
                 'Ожидание ввода...',
                 reply_markup=main_btn()
             )
-            bot.register_next_step_handler(msg, search_operation_step)
-        elif user_text == 'Выбрать отчет':
-            msg = bot.send_message(
-                chat_id,
-                'За какой период сформировать отчет ? \n'
-                'Ожидание ввода...',
-                # reply_markup=main_btn()
+            bot.register_next_step_handler(msg, email_operation_to_db)
+        else:
+            if user_text == 'Выбрать прицеп':
+                msg = bot.send_message(
+                    chat_id,
+                    'Введите обозначение прицепа для поиска. \n'
+                    'Ожидание ввода...',
+                    reply_markup=main_btn()
+                )
+                bot.register_next_step_handler(msg, search_operation_step)
+            elif user_text == 'Выбрать отчет':
+                markup = types.ReplyKeyboardRemove(selective=False)
+                msg = bot.send_message(
+                    chat_id,
+                    'Отчет формируется по дате возникновения проблемы \n'
+                    'Дату нужно вводить в формате ГГГГ-ММ-ДД, '
+                    'соответственно такой запрос вернет отчет '
+                    'за конкретный день, а запрос ГГГГ-ММ вернет '
+                    'отчет за конкретный месяц в году. \n'
+                    'Для обработки пользовательского запроса '
+                    'необходимо указать период через двоеточие, '
+                    'например 2022-05:2022-06 вернет '
+                    'отчет за май-июнь 2022 года. \n'
+                    'За какой период сформировать отчет ? \n'
+                    'Ожидание ввода...',
+                    reply_markup=markup
+                )
+                bot.register_next_step_handler(msg, report_operation)
+            elif user_text == 'Главное меню':
+                markup = types.ReplyKeyboardRemove(selective=False)
+                msg = bot.send_message(
+                    chat_id,
+                    'Для возврата в главное меню используйте команду - /start',
+                    reply_markup=markup
+                )
+            else:
+                msg = bot.send_message(
+                    chat_id,
+                    'Функция, в которой вы находитесь, ожидает на вход '
+                    'команду с кнопок под клавиатурой. \n'
+                    'Выберите действие:',
+                    reply_markup=read_markup()
+                )
+                bot.register_next_step_handler(msg, read_operation)
+    except Exception as err:
+        bot.reply_to(
+            message,
+            'Ошибка! \n'
+            f'Функция: {read_operation.__name__} \n'
+            f'{err} \n'
+            'Вернитесь в главное меню - /start'
             )
-            # bot.register_next_step_handler(msg, search_operation_step)
-        elif user_text == 'Главное меню':
+
+
+def email_operation_to_db(message):
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        if user_text == 'Главное меню':
             markup = types.ReplyKeyboardRemove(selective=False)
             msg = bot.send_message(
                 chat_id,
@@ -54,11 +105,12 @@ def read_operation(message):
                 reply_markup=markup
             )
         else:
+            db.create_email(user_text, chat_id)
             msg = bot.send_message(
                 chat_id,
-                'Функция, в которой вы находитесь, ожидает на вход '
-                'команду с кнопок под клавиатурой. \n'
-                'Выберите действие:',
+                'Адрес электронной почты успешно внесен в базу данных ! \n'
+                f'Ваш адрес: {user_text} \n'
+                'Для продолжения работы в ветке чтения выберите действие:',
                 reply_markup=read_markup()
             )
             bot.register_next_step_handler(msg, read_operation)
@@ -66,7 +118,7 @@ def read_operation(message):
         bot.reply_to(
             message,
             'Ошибка! \n'
-            f'Функция: {read_operation.__name__} \n'
+            f'Функция: {email_operation_to_db.__name__} \n'
             f'{err} \n'
             'Вернитесь в главное меню - /start'
             )
@@ -89,7 +141,7 @@ def search_operation_step(message):
                 'Начинаю процесс поиска по запросу.'
                 )
             designation = user_text
-            if len(designation.split('-')) >= 2:
+            if len(designation.split('-')) > 2:
                 designation = transform_to_1c(message.text)
             list_trailers = db.search_designation_trailer(designation)
             find_trailers = ''
@@ -158,7 +210,7 @@ def search_operation_next_step(message):
                 'Ожидание ввода...',
                 reply_markup=trailer_report()
             )
-            bot.register_next_step_handler(msg, email_check_operation)
+            bot.register_next_step_handler(msg, excel_create_trailer_operation)
         elif user_text == 'Повторить поиск':
             msg = bot.send_message(
                 message.chat.id,
@@ -184,51 +236,42 @@ def search_operation_next_step(message):
             )
 
 
-def email_check_operation(message):
+def excel_create_trailer_operation(message):
     try:
         chat_id = message.chat.id
         user_text = message.text
         if user_text == 'Все ошибки':
-            if db.check_email(chat_id) is None:
-                msg = bot.send_message(
-                    chat_id,
-                    'Мне нужно знать куда направлять отчет \n'
-                    'Для дальнейшей работы введите адрес '
-                    'рабочей электронной почты. \n'
-                    'Ожидание ввода...',
-                    reply_markup=main_btn()
+            trouble = user_dict[chat_id]
+            trailer = db.search_trailer(trouble.trailer_id)
+            bot.send_message(
+                chat_id,
+                'Формирую запрос: \n'
+                f'Все ошибки по прицепу {trailer[0]}\n'
+                'Ожидайте сообщения об успешной отправке отчета'
+            )
+            try:
+                folder = we.create_user_folder(chat_id)
+                troubles = db.search_by_trailer_in_troubles(
+                    trouble.trailer_id
                 )
-                bot.register_next_step_handler(msg, email_operation_to_db)
-            else:
-                trouble = user_dict[chat_id]
-                trailer = db.search_trailer(trouble.trailer_id)
+                if we.create_excel(troubles, folder):
+                    mail = db.check_email(chat_id)
+                    if se.send_email_from_db(mail, folder):
+                        # we.delete_excel()
+                        markup = types.ReplyKeyboardRemove(selective=False)
+                        bot.send_message(
+                            chat_id,
+                            'Сформирован запрос к базе данных \n'
+                            'Проверьте почту',
+                            reply_markup=markup
+                        )
+            except Exception as err:
                 bot.send_message(
                     chat_id,
-                    'Формирую запрос: \n'
-                    f'Все ошибки по прицепу {trailer[0]}\n'
-                    'Ожидайте сообщения об успешной отправке отчета'
+                    f'{err}'
+                    'Что то пошло не так \n'
+                    'Вернитесь в главное меню - /start'
                 )
-                try:
-                    trouble = user_dict[chat_id]
-                    folder = we.create_user_folder(chat_id)
-                    if we.create_excel(trouble.trailer_id, folder):
-                        mail = db.check_email(chat_id)
-                        if se.send_email_from_db(mail, folder):
-                            # we.delete_excel()
-                            markup = types.ReplyKeyboardRemove(selective=False)
-                            bot.send_message(
-                                chat_id,
-                                'Сформирован запрос к базе данных \n'
-                                'Проверьте почту',
-                                reply_markup=markup
-                            )
-                except Exception as err:
-                    bot.send_message(
-                        chat_id,
-                        f'{err}'
-                        'Что то пошло не так \n'
-                        'Вернитесь в главное меню - /start'
-                    )
         elif user_text == 'Главное меню':
             markup = types.ReplyKeyboardRemove(selective=False)
             bot.send_message(
@@ -244,35 +287,67 @@ def email_check_operation(message):
                 'Выберите действие:',
                 reply_markup=trailer_report()
             )
-            bot.register_next_step_handler(msg, email_check_operation)
+            bot.register_next_step_handler(msg, excel_create_trailer_operation)
     except Exception as err:
         bot.reply_to(
             message,
             'Ошибка! \n'
-            f'Функция: {email_check_operation.__name__} \n'
+            f'Функция: {excel_create_trailer_operation.__name__} \n'
             f'{err} \n'
             'Вернитесь в главное меню - /start'
             )
 
 
-def email_operation_to_db(message):
+def report_operation(message):
     try:
         chat_id = message.chat.id
         user_text = message.text
-        db.create_email(user_text, chat_id)
-        msg = bot.send_message(
+        flag = False
+        bot.send_message(
             chat_id,
-            'Адрес электронной почты успешно внесен в базу данных ! \n'
-            f'Ваш адрес: {user_text} \n'
-            'Для продолжения выберите действие:',
-            reply_markup=trailer_report()
+            'Формирую запрос: \n'
+            f'Отчет по дате {user_text}\n'
+            'Ожидайте сообщения об успешной отправке отчета'
         )
-        bot.register_next_step_handler(msg, email_check_operation)
+        folder = we.create_user_folder(chat_id)
+        for sign in user_text:
+            if sign == ':':
+                flag = True
+        if flag:
+            period = user_text.split(':')
+            period_troubles = db.search_by_period_in_troubles(
+                period[0],
+                period[1]
+            )
+            if we.create_excel(period_troubles, folder):
+                mail = db.check_email(chat_id)
+                if se.send_email_from_db(mail, folder):
+                    # we.delete_excel()
+                    markup = types.ReplyKeyboardRemove(selective=False)
+                    bot.send_message(
+                        chat_id,
+                        'Сформирован запрос к базе данных \n'
+                        'Проверьте почту',
+                        reply_markup=markup
+                    )
+        else:
+            date_troubles = db.search_by_date_in_troubles(user_text)
+            if we.create_excel(date_troubles, folder):
+                mail = db.check_email(chat_id)
+                if se.send_email_from_db(mail, folder):
+                    # we.delete_excel()
+                    markup = types.ReplyKeyboardRemove(selective=False)
+                    bot.send_message(
+                        chat_id,
+                        'Сформирован запрос к базе данных \n'
+                        'Проверьте почту',
+                        reply_markup=markup
+                    )
     except Exception as err:
         bot.reply_to(
             message,
             'Ошибка! \n'
-            f'Функция: {email_operation_to_db.__name__} \n'
+            f'Функция: {report_operation.__name__} \n'
             f'{err} \n'
             'Вернитесь в главное меню - /start'
             )

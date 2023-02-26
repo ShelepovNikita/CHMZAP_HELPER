@@ -39,3 +39,13 @@ def eng_rus_letters(transform_list):
                 x[j] = letters_dict[x[j]]
         transform_list[i] = ''.join(x)
     return transform_list
+
+
+def processing_date(date):
+    flag = False
+    for part in date:
+        if part == '-':
+            flag = True
+    if flag:
+        y_m_d = date.split('-')
+        y = y_m_d[0]

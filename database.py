@@ -184,3 +184,21 @@ class Database:
                 'SELECT last_name FROM users WHERE external_id = ?;',
                 (external_id,)).fetchall()
         return result[0]
+
+    # Поиск по дате
+    def search_by_date_in_troubles(self, date):
+        date = ('%' + date + '%')
+        with self.con:
+            result = self.cur.execute(
+                'SELECT * FROM troubles WHERE date LIKE ?;',
+                (date,)).fetchall()
+        return result
+
+    # Поиск по периоду
+    def search_by_period_in_troubles(self, start_date, end_date):
+        # date = ('%' + date + '%')
+        with self.con:
+            result = self.cur.execute(
+                'SELECT * FROM troubles WHERE date >= ? AND date <= ?;',
+                (start_date, end_date,)).fetchall()
+        return result
