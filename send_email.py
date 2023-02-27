@@ -8,16 +8,10 @@ from email.mime.text import MIMEText
 
 import os
 import mimetypes
-
-# import sys
-# For linux
-# sys.path.append('..')
-# For windows
-# sys.path.append('C:/pet_Dev/CHMZAP_HELPER/chmzap_helper')
 import config
 
 
-def send_email_from_db(recipient, user_folder):
+def send_email_from_db(recipient, user_folder, message_text='Default request'):
     sender = config.sender
     password = config.password
 
@@ -31,7 +25,7 @@ def send_email_from_db(recipient, user_folder):
         msg["To"] = recipient
         msg["Subject"] = "Сформирован ответ на ваш запрос в базу данных"
 
-        msg.attach(MIMEText('Hello'))
+        msg.attach(MIMEText(message_text))
 
         for file in os.listdir(user_folder):
             filename = os.path.basename(file)

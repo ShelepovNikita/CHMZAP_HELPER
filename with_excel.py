@@ -125,10 +125,10 @@ def create_excel(result, user_folder):
         for col_num, value in enumerate(df.columns.values):
             worksheet.write(0, col_num + 1, value, header_format)
         for index, row in df.iterrows():
-            if len(row[3]) > len(row[4]):
-                len_str = len(row[3]) * 0.85
+            if len(row[3]) <= 15:
+                len_str = 20
             else:
-                len_str = len(row[4]) * 0.85
+                len_str = len(row[3]) * 0.9
             worksheet.set_row(index + 1, len_str, cell_format)
         writer.close()
         return True

@@ -2,7 +2,6 @@
 from telebot import types
 
 
-# Главное меню
 def main_markup():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     itempbtn1 = types.KeyboardButton('Создание')
@@ -13,7 +12,6 @@ def main_markup():
     return markup
 
 
-# Есть ли прицеп в списке?
 def choose_markup():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
     itempbtn1 = types.KeyboardButton('Да')
@@ -23,7 +21,6 @@ def choose_markup():
     return markup
 
 
-# Выбор виновника
 def choose_causer():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=3)
     itempbtn1 = types.KeyboardButton('КО')
@@ -33,7 +30,6 @@ def choose_causer():
     return markup
 
 
-# Создание записи
 def create_markup():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     itempbtn1 = types.KeyboardButton('Номер заказа')

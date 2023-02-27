@@ -93,6 +93,25 @@ def register_step(message):
             )
 
 
+@bot.message_handler(commands=['count'])
+def count_troubles(message):
+    try:
+        chat_id = message.chat.id
+        if db.check_user(chat_id):
+            troubles = db.count_troubles()
+            bot.send_message(
+                chat_id,
+                f'Количество записей в базе данных: {troubles[0]}',
+                )
+    except Exception:
+        bot.reply_to(
+            message,
+            f'Функция: {register_step.__name__} \n'
+            f'{Exception} \n'
+            'Главное меню - /start'
+            )
+
+
 @bot.message_handler(
     content_types=['text', 'audio', 'document', 'photo', 'sticker', 'video'])
 def text_filter(message):

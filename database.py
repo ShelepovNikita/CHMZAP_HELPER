@@ -202,3 +202,24 @@ class Database:
                 'SELECT * FROM troubles WHERE date >= ? AND date <= ?;',
                 (start_date, end_date,)).fetchall()
         return result
+
+    # Количество записей
+    def count_troubles(self):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT COUNT(*) FROM troubles;').fetchall()
+        return result[0]
+
+    # Макс дата
+    def min_date(self):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT MIN(date) FROM troubles;').fetchall()
+        return result[0]
+
+    # Мин дата
+    def max_date(self):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT MAX(date) FROM troubles;').fetchall()
+        return result[0]

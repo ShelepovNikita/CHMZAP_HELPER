@@ -35,7 +35,9 @@ def main_operation_step(message):
                 'Для поиска проблем по конкретному прицепу '
                 'выберите прицеп. \n'
                 'Для формирования отчета за период выберите отчет. \n'
-                'Выберите действие:',
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=read_markup()
             )
             bot.register_next_step_handler(msg, read_operation)
