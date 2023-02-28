@@ -173,7 +173,7 @@ class Database:
     def search_by_trailer_in_troubles(self, id):
         with self.con:
             result = self.cur.execute(
-                'SELECT * FROM troubles WHERE trailer_id = ?;',
+                'SELECT * FROM troubles WHERE trailer_id = ? ORDER BY date;',
                 (id,)).fetchall()
         return result
 
@@ -190,7 +190,7 @@ class Database:
         date = ('%' + date + '%')
         with self.con:
             result = self.cur.execute(
-                'SELECT * FROM troubles WHERE date LIKE ?;',
+                'SELECT * FROM troubles WHERE date LIKE ? ORDER BY date;',
                 (date,)).fetchall()
         return result
 
@@ -199,7 +199,7 @@ class Database:
         # date = ('%' + date + '%')
         with self.con:
             result = self.cur.execute(
-                'SELECT * FROM troubles WHERE date >= ? AND date <= ?;',
+                'SELECT * FROM troubles WHERE date >= ? AND date <= ? ORDER BY date;',
                 (start_date, end_date,)).fetchall()
         return result
 
