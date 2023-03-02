@@ -332,7 +332,9 @@ def send_excel_trailer_operation(message):
                     bot.send_message(
                         chat_id,
                         'Сформирован запрос к базе данных \n'
-                        'Проверьте почту',
+                        'Проверьте почту \n'
+                        'Для возврата в главное меню используйте '
+                        'команду - /start',
                         reply_markup=markup
                     )
                 else:
@@ -414,11 +416,14 @@ def send_excel_date_operation(message):
             if we.create_excel(period_troubles, folder):
                 mail = db.check_email(chat_id)
                 if se.send_email_from_db(mail, folder, output_str):
+                    markup = types.ReplyKeyboardRemove(selective=False)
                     bot.send_message(
                         chat_id,
                         'Сформирован запрос к базе данных \n'
-                        'Проверьте почту',
-                        reply_markup=main_btn()
+                        'Проверьте почту \n'
+                        'Для возврата в главное меню используйте '
+                        'команду - /start',
+                        reply_markup=markup
                     )
                 else:
                     markup = types.ReplyKeyboardRemove(selective=False)

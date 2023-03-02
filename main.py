@@ -6,8 +6,9 @@ import time
 # import string
 from config import bot, db
 # from config import URL
-from markups import main_markup
+from markups import main_markup, main_btn
 from branches.main_branch import main_operation_step
+from telebot import types
 
 
 # secret = ''.join(random.choice(string.ascii_letters) for x in range(20))
@@ -76,14 +77,17 @@ def register_step(message):
                 )
             bot.register_next_step_handler(msg, main_operation_step)
         else:
-            first_name = message.from_user.first_name
-            last_name = message.from_user.last_name
-            db.create_user(chat_id, first_name, last_name)
+            data = (
+                chat_id,
+                message.from_user.first_name,
+                message.from_user.last_name,
+            )
+            db.create_user(data)
             bot.send_message(
                 message.chat.id,
                 'Регистрация успешна. Вы внесены в базу данных.'
                 'Главное меню - /start'
-                )
+            )
     except Exception:
         bot.reply_to(
             message,
@@ -112,15 +116,77 @@ def count_troubles(message):
             )
 
 
+@bot.message_handler(commands=['change_mail'])
+def change_mail(message):
+    try:
+        chat_id = message.chat.id
+        if db.check_user(chat_id):
+            email = db.search_user_emal(chat_id)[0]
+            msg = bot.send_message(
+                chat_id,
+                f'Ваш адрес email в базе данных: {email} \n'
+                'Введите новый адрес email для пользователя: '
+                f'{message.from_user.first_name} \n'
+                '\n'
+                '<i>Ожидание ввода:</i>',
+                parse_mode='HTML',
+            )
+            bot.register_next_step_handler(msg, update_email)
+    except Exception:
+        bot.reply_to(
+            message,
+            f'Функция: {register_step.__name__} \n'
+            f'{Exception} \n'
+            'Главное меню - /start'
+            )
+
+
+def update_email(message):
+    try:
+        chat_id = message.chat.id
+        user_text = message.text
+        flag = False
+        for i in user_text:
+            if i in '@':
+                flag = True
+        if flag:
+            db.create_email(user_text, chat_id)
+            msg = bot.send_message(
+                chat_id,
+                'Адрес электронной почты успешно внесен в базу данных ! \n'
+                f'Ваш адрес: {user_text} \n'
+                'Для возврата в главное меню используйте команду - /start'
+            )
+        else:
+            msg = bot.send_message(
+                chat_id,
+                'Введите адрес электронной почты! \n'
+                '\n'
+                '<i>Ожидание ввода...</i>',
+                parse_mode='HTML',
+                reply_markup=main_btn()
+            )
+            bot.register_next_step_handler(msg, update_email)
+    except Exception:
+        bot.reply_to(
+            message,
+            f'Функция: {register_step.__name__} \n'
+            f'{Exception} \n'
+            'Главное меню - /start'
+            )
+
+
 @bot.message_handler(
     content_types=['text', 'audio', 'document', 'photo', 'sticker', 'video'])
 def text_filter(message):
     try:
+        markup = types.ReplyKeyboardRemove(selective=False)
         bot.send_message(
             message.chat.id,
             'Бот не поддерживает работу с текстом. \n'
             'Для дальнейшей работы вызовите главное меню \n'
-            'Главное меню - /start'
+            'Главное меню - /start',
+            reply_markup=markup
             )
     except Exception:
         bot.reply_to(

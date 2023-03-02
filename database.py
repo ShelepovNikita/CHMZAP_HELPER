@@ -42,12 +42,14 @@ class Database:
             #     (causers))
 
     # Создание пользователя
-    def create_user(self, user_id, first_name, last_name):
-        data = (user_id, first_name, last_name)
+    def create_user(self, data):
         with self.con:
-            self.cur.execute(
-                'INSERT INTO users(external_id, first_name, last_name) VALUES(?, ?, ?);',
-                (*data,))
+            self.cur.execute('''
+                INSERT INTO users(
+                    external_id,
+                    first_name,
+                    last_name)
+                VALUES(?, ?, ?);''', (data))
 
     # Поиск пользователя
     def check_user(self, user_id):
@@ -121,11 +123,19 @@ class Database:
         return result[0]
 
     # Создание записи в таблице проблем
-    def create_trouble(self, list_to_push):
+    def create_trouble(self, create_list):
         with self.con:
-            self.cur.execute(
-                'INSERT INTO troubles(date, order_num, problem, document, status, trailer_id, causer_id, user_id) VALUES(?, ?, ?, ?, ?, ?, ?, ?);',
-                (*list_to_push,))
+            self.cur.execute('''
+                INSERT INTO troubles(
+                    date,
+                    order_num,
+                    problem,
+                    document,
+                    status,
+                    trailer_id,
+                    causer_id,
+                    user_id)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?);''', (create_list))
 
     # Создание записи в таблице прицепов
     def create_trailer(self, designation):
@@ -137,9 +147,12 @@ class Database:
     def search_designation_trailer(self, designation):
         designation = ('%' + designation + '%')
         with self.con:
-            result = self.cur.execute(
-                'SELECT id, designation FROM trailers WHERE designation LIKE ?;',
-                (designation,)).fetchall()
+            result = self.cur.execute('''
+                SELECT
+                    id,
+                    designation
+                FROM trailers
+                WHERE designation LIKE ?;''', (designation,)).fetchall()
         return result
 
 # Функции для скрпита парсинга таблиц экселя
@@ -164,9 +177,12 @@ class Database:
 
     def script_user_external_id(self, last_name):
         with self.con:
-            result = self.cur.execute(
-                'SELECT external_id, last_name FROM users WHERE last_name = ?;',
-                (last_name,)).fetchall()
+            result = self.cur.execute('''
+                SELECT
+                    external_id,
+                    last_name
+                FROM users
+                WHERE last_name = ?;''', (last_name,)).fetchall()
         return result[0]
 # ===================================================================================
 
@@ -198,9 +214,12 @@ class Database:
     def search_by_period_in_troubles(self, start_date, end_date):
         # date = ('%' + date + '%')
         with self.con:
-            result = self.cur.execute(
-                'SELECT * FROM troubles WHERE date >= ? AND date <= ? ORDER BY date;',
-                (start_date, end_date,)).fetchall()
+            result = self.cur.execute('''
+                SELECT
+                    *
+                FROM troubles
+                WHERE date >= ? AND date <= ?
+                ORDER BY date;''', (start_date, end_date,)).fetchall()
         return result
 
     # Количество записей
@@ -231,3 +250,35 @@ class Database:
                 'SELECT * FROM troubles WHERE id = ?;',
                 (id,)).fetchall()
         return result[0]
+
+    # Поиск пользователя, фамилия
+    def search_user_emal(self, external_id):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT work_email FROM users WHERE external_id = ?;',
+                (external_id,)).fetchall()
+        return result[0]
+
+    # Редактирование записи
+    def update_trouble(self, update_list, id):
+        with self.con:
+            self.cur.execute('''
+                UPDATE troubles
+                SET date = ?,
+                    order_num = ?,
+                    problem = ?,
+                    document = ?,
+                    status = ?,
+                    trailer_id = ?,
+                    causer_id = ?,
+                    user_id = ?
+                WHERE id = ?;''', (*update_list, id))
+        return True
+
+    # Удаление записи
+    def delete_trouble(self, id):
+        with self.con:
+            self.cur.execute(
+                'DELETE FROM troubles WHERE id=?;',
+                (id,))
+        return True

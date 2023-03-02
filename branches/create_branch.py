@@ -1,7 +1,7 @@
 
 
 from datetime import datetime
-from config import bot, db
+from config import bot, db, group_id
 from markups import (
     choose_markup,
     choose_causer,
@@ -519,7 +519,7 @@ def write_trouble_to_database(message):
         user_text = message.text
         trouble = user_dict[chat_id]
         if user_text == 'Внести запись':
-            create_list = [
+            create_list = (
                 trouble.date,
                 trouble.order_num,
                 trouble.problem,
@@ -528,7 +528,7 @@ def write_trouble_to_database(message):
                 trouble.trailer_id,
                 trouble.causer_id,
                 trouble.user_id,
-            ]
+            )
             db.create_trouble(create_list)
             markup = types.ReplyKeyboardRemove(selective=False)
             bot.send_message(
@@ -536,6 +536,24 @@ def write_trouble_to_database(message):
                 'Запись успешно внесена \n'
                 'Главное меню - /start',
                 reply_markup=markup
+            )
+            user = db.search_user_last_name(trouble.user_id)
+            trailer = db.search_trailer(trouble.trailer_id)
+            if trouble.status is None:
+                status = None
+            elif trouble.status == 0:
+                status = 'Требует решения'
+            else:
+                status = 'Проблема решена'
+            count = db.count_troubles()[0]
+            bot.send_message(
+                group_id,
+                f'<b>Пользователь {user[0]} внес запись!</b> \n'
+                f'Прицеп: {trailer[0]} \n'
+                f'Проблема: {trouble.problem} \n'
+                f'Статус проблемы: {status} \n'
+                f'Общее количество записей в базе данных: {count}',
+                parse_mode='HTML',
             )
         elif user_text == 'Номер заказа':
             markup = types.ReplyKeyboardRemove(selective=False)

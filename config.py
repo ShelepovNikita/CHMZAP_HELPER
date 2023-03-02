@@ -7,6 +7,7 @@ URL = 'CHMZAP'
 key = ['CHMZAP']
 bot = telebot.TeleBot(TOKEN, threaded=False)
 db = database.Database('chmzap_sq.sqlite')
+group_id = '-984037417'
 
 sender = 'chmzap.helper@gmail.com'
 password = 'aqosuhvcoztgwpme'

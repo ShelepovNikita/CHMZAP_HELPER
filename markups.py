@@ -119,3 +119,18 @@ def abort_trailer_search():
     itempbtn2 = types.KeyboardButton('Главное меню')
     markup.add(itempbtn1, itempbtn2)
     return markup
+
+
+def update_markup():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    itempbtn1 = types.KeyboardButton('Дата')
+    itempbtn2 = types.KeyboardButton('Номер заказа')
+    itempbtn3 = types.KeyboardButton('Проблема')
+    itempbtn4 = types.KeyboardButton('Документ (СЗ)')
+    itempbtn5 = types.KeyboardButton('Статус проблемы')
+    itempbtn6 = types.KeyboardButton('Прицеп')
+    itempbtn7 = types.KeyboardButton('Виновник')
+    itempbtn8 = types.KeyboardButton('Применить изменения')
+    markup.add(itempbtn1, itempbtn2, itempbtn3, itempbtn4,
+               itempbtn5, itempbtn6, itempbtn7, itempbtn8,)
+    return markup
