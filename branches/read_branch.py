@@ -239,9 +239,8 @@ def search_operation_next_step(message):
                     f'Вы выбрали прицеп: {trailer[0]} \n'
                     'Бот находится в разработке, '
                     'список функций будет пополняться... \n'
-                    'Выберите действие \n'
                     '\n'
-                    '<i>Ожидание ввода...</i>',
+                    '<i>Выберите действие:</i>',
                     parse_mode='HTML',
                     reply_markup=trailer_report()
                 )
@@ -364,7 +363,9 @@ def send_excel_trailer_operation(message):
                 chat_id,
                 'Функция, в которой вы находитесь, ожидает на вход '
                 'команду с кнопок под клавиатурой. \n'
-                'Выберите действие:',
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=trailer_report()
             )
             bot.register_next_step_handler(msg, send_excel_trailer_operation)

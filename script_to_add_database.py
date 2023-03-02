@@ -72,14 +72,45 @@ def create_excel_troubles(file_with_truobles_xlsx):
 
             list_data_filter = []
             for data in list_data[1:]:
-                list_data_filter.append(str(data)[:10])
-            list_orders_filter = list_orders[1:]
-            list_troubles_filter = list_troubles[1:]
-            list_documents_filter = list_document[1:]
+                if data == 'None':
+                    data = ' '
+                else:
+                    data = (str(data)[:10])
+                list_data_filter.append(data)
 
-            list_status_filter = list_status[1:]
-            for i in range(len(list_status_filter)):
-                list_status_filter[i] = list_status_filter[i]
+            list_orders_filter = []
+            for order in list_orders[1:]:
+                if order == 'None':
+                    order = ' '
+                else:
+                    order = str(order)
+                list_orders_filter.append(order)
+
+            list_troubles_filter = []
+            for trouble in list_troubles[1:]:
+                if trouble == 'None':
+                    trouble = ' '
+                else:
+                    trouble = str(trouble)
+                list_troubles_filter.append(trouble)
+
+            list_documents_filter = []
+            for document in list_document[1:]:
+                if document == 'None':
+                    document = ' '
+                else:
+                    document = str(document)
+                list_documents_filter.append(document)
+
+            list_status_filter = []
+            for status in list_status[1:]:
+                if status == 'None':
+                    status = ' '
+                else:
+                    status = str(status)
+                list_status_filter.append(status)
+            # for i in range(len(list_status_filter)):
+            #     list_status_filter[i] = list_status_filter[i]
 
             list_trailers_filter = []
             for trailer in list_trailers[1:]:
@@ -91,7 +122,10 @@ def create_excel_troubles(file_with_truobles_xlsx):
 
             list_causers = list_causers[1:]
             for i in range(len(list_causers)):
-                list_causers[i] = db.script_causer_id(list_causers[i])[0]
+                if list_causers[i] == 'None':
+                    list_causers[i] = ' '
+                else:
+                    list_causers[i] = db.script_causer_id(list_causers[i])[0]
 
             list_users = list_users[1:]
             for i in range(len(list_users)):
@@ -106,8 +140,8 @@ def create_excel_troubles(file_with_truobles_xlsx):
                                        'causer_id': list_causers,
                                        'user_id': list_users,
                                        })
-            create = create.dropna()
-            create['status'] = create['status'].astype(int)
+            # create = create.dropna()
+            # create['status'] = create['status'].astype(int)
             name = she + ' ' + file_with_truobles_xlsx
             create.to_excel(f'for_excel_files/complete/{name}',
                             sheet_name=she,
@@ -128,7 +162,7 @@ def add_troubles_in_db():
             spisok_strok = []
             for stroka in excel_data_df.iloc:
                 list_stroka = list(stroka)
-                for i in range(len(list_stroka)):
+                for _ in range(len(list_stroka)):
                     intermediate_stroka = []
                     date = str(list_stroka[0])
                     intermediate_stroka.append(date)
@@ -165,7 +199,6 @@ def add_troubles_in_db():
         print(err)
 
 
-# add_trailers_in_db('C:/pet_Dev/CHMZAP_HELPER/for_excel_files/Список прицепов.xlsx')
-# create_excel_troubles('Прицепы, ошибки и статистика 2022.xlsx')
+# add_trailers_in_db('C:/pet_Dev/CHMZAP_HELPER/for_excel_files/Список прицепов мой.xlsx')
+# create_excel_troubles('Прицепы, ошибки и статистика 2023.xlsx')
 # add_troubles_in_db()
-# print(db.check_email(5829786533))

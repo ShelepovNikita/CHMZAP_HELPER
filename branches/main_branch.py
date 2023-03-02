@@ -6,13 +6,14 @@ from markups import (
     )
 from branches.create_branch import create_operation
 from branches.read_branch import read_operation
+from branches.update_branch import update_operation
 
 
 def main_operation_step(message):
     try:
         chat_id = message.chat.id
         if message.text == 'Создание':
-            bot.send_message(
+            msg = bot.send_message(
                 chat_id,
                 'Вы выбрали создание записи \n'
                 'Для поиска прицепа в базе данных '
@@ -20,11 +21,10 @@ def main_operation_step(message):
                 'Для создания нового прицепа '
                 'выберите кнопку "Создать". \n'
                 'Если вам уже известен порядковый номер прицепа из базы то '
-                'сейчас самое время его ввести.'
-            )
-            msg = bot.send_message(
-                chat_id,
-                'Выберите действие или введите порядковый номер прицепа:',
+                'сейчас самое время его ввести. \n'
+                '\n'
+                '<i>Ожидание ввода или действия...</i>',
+                parse_mode='HTML',
                 reply_markup=search_create_trailer_btn()
             )
             bot.register_next_step_handler(msg, create_operation)
@@ -42,16 +42,19 @@ def main_operation_step(message):
             )
             bot.register_next_step_handler(msg, read_operation)
         elif message.text == 'Редактирование':
-            # user_dict[chat_id] = User(message.chat.id)
-            bot.send_message(
+            msg = bot.send_message(
                 chat_id,
                 'Вы выбрали редактирование записей в базе данных. \n'
-                'Раздел в разработке.'
-                '/start'
+                'Для редактирования конкретной записи необходимо ее выбрать '
+                'по уникальному идентификатору - номеру записи в базе данных.'
+                'Этот номер можно получить из первой колонки отчета '
+                'по дате или прицепу. Введите номер записи. \n'
+                '\n'
+                '<i>Ожидание ввода...</i>',
+                parse_mode='HTML'
             )
-            # Место для следующего шага по редактированию записей.
+            bot.register_next_step_handler(msg, update_operation)
         elif message.text == 'Удаление':
-            # user_dict[chat_id] = User(message.chat.id)
             bot.send_message(
                 chat_id,
                 'Вы выбрали удаление записей из базы данных. \n'

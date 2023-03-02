@@ -223,3 +223,11 @@ class Database:
             result = self.cur.execute(
                 'SELECT MAX(date) FROM troubles;').fetchall()
         return result[0]
+
+    # Поиск по id записи
+    def search_by_id_in_troubles(self, id):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT * FROM troubles WHERE id = ?;',
+                (id,)).fetchall()
+        return result[0]

@@ -52,7 +52,10 @@ def create_operation(message):
         if user_text == 'Найти прицеп':
             msg = bot.send_message(
                 chat_id,
-                'Введите обозначение прицепа для поиска.',
+                'Введите обозначение прицепа для поиска. \n'
+                '\n'
+                '<i>Ожидание ввода...</i>',
+                parse_mode='HTML',
                 reply_markup=main_btn()
             )
             bot.register_next_step_handler(msg, search_operation_step)
@@ -61,7 +64,9 @@ def create_operation(message):
                 chat_id,
                 'Введите обозначение прицепа для создания. \n'
                 'Обозначение будет автоматически переведено как в 1С \n'
-                'Ожидание ввода...',
+                '\n'
+                '<i>Ожидание ввода...</i>',
+                parse_mode='HTML',
                 reply_markup=main_btn()
             )
             bot.register_next_step_handler(msg, intermediate_search_step)
@@ -82,7 +87,10 @@ def create_operation(message):
                 message.chat.id,
                 f'Вы выбрали прицеп: {trailer[0]} \n'
                 'Для внесения проблемы выберите соответствующую '
-                'кнопку под клавиатурой \n',
+                'кнопку под клавиатурой с номером прицепа \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=main_trouble_btn()
             )
             bot.register_next_step_handler(msg, create_trouble_step)
@@ -94,7 +102,9 @@ def create_operation(message):
                 'либо команду с кнопок под клавиатурой. \n'
                 'Воспользуйтесь кнопкой найти чтобы узнать '
                 'порядковый номер. \n'
-                'Выберите действие:',
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=search_create_trailer_btn()
                 )
             bot.register_next_step_handler(msg, create_operation)
@@ -103,7 +113,10 @@ def create_operation(message):
             message.chat.id,
             'Прицепа с таким номером нет в списке \n'
             'Воспользуйтесь кнопками ввода для выбор действия \n'
-            'Или введите номер прицепа',
+            'Или введите номер прицепа \n'
+            '\n'
+            '<i>Ожидание ввода или действия...</i>',
+            parse_mode='HTML',
             reply_markup=search_create_trailer_btn()
             )
         bot.register_next_step_handler(msg, create_operation)
@@ -152,7 +165,10 @@ def search_operation_step(message):
                 'порядковый номер прицепа \n'
                 '(из списка: первый параметр в скобках без кавычек - число) \n'
                 'Либо повторите поиск или создайте новый прицеп с помощью '
-                'кнопок.',
+                'кнопок. \n'
+                '\n'
+                '<i>Ожидание ввода или действия...</i>',
+                parse_mode='HTML',
                 reply_markup=search_create_trailer_btn()
             )
             bot.register_next_step_handler(msg, create_operation)
@@ -162,7 +178,6 @@ def search_operation_step(message):
             bot.reply_to(
                 message,
                 'Длинна ответа на поиск по запросу превысила 4096 символов! \n'
-                'Уточните поиск'
             )
         elif err == IS_EMPTY:
             bot.reply_to(
@@ -171,7 +186,10 @@ def search_operation_step(message):
             )
         msg = bot.send_message(
             message.chat.id,
-            'Уточните поиск или создайте новый прицеп',
+            'Уточните поиск или создайте новый прицеп \n'
+            '\n'
+            '<i>Ожидание ввода или действия...</i>',
+            parse_mode='HTML',
             reply_markup=search_create_trailer_btn()
         )
         bot.register_next_step_handler(msg, create_operation)
@@ -200,13 +218,13 @@ def intermediate_search_step(message):
             user_dict[chat_id] = Trailer(chat_id)
             trailer = user_dict[chat_id]
             trailer.designation = transform_to_1c(user_text)
-            bot.send_message(
-                message.chat.id,
-                'Подтвердите ввод обозначения прицепа'
-                )
             msg = bot.send_message(
-                message.chat.id,
-                f'Вы ввели: {trailer.designation}',
+                chat_id,
+                'Подтвердите ввод обозначения прицепа \n'
+                f'Вы ввели: {trailer.designation} \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=choose_markup()
                 )
             bot.register_next_step_handler(msg, confirm_search_step)
@@ -220,7 +238,11 @@ def intermediate_search_step(message):
         msg = bot.send_message(
             message.chat.id,
             'Введите обозначение прицепа для создания. \n'
-            'Обозначение будет автоматически переведено как в 1С',
+            'Обозначение будет автоматически переведено как в 1С \n'
+            '\n'
+            '<i>Ожидание ввода...</i>',
+            parse_mode='HTML',
+            reply_markup=main_btn()
         )
         bot.register_next_step_handler(msg, intermediate_search_step)
     except Exception as err:
@@ -256,7 +278,10 @@ def confirm_search_step(message):
             markup2.add(itempbtn1)
             msg = bot.send_message(
                 message.chat.id,
-                'Для продолжения нажмите кнопку с цифрой...',
+                'Для продолжения нажмите кнопку с цифрой... \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=markup2
             )
             bot.register_next_step_handler(msg, create_operation)
@@ -271,10 +296,24 @@ def confirm_search_step(message):
             markup = types.ReplyKeyboardRemove(selective=False)
             msg = bot.send_message(
                 chat_id,
-                'Выберите действие с помощью кнопок под клавиатурой',
+                'Выберите действие с помощью кнопок под клавиатурой \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=search_create_trailer_btn()
             )
             bot.register_next_step_handler(msg, create_operation)
+        else:
+            msg = bot.send_message(
+                chat_id,
+                'Функция, в которой вы находитесь, ожидает на вход \n'
+                'команду с кнопок под клавиатурой. \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
+                reply_markup=choose_markup()
+                )
+            bot.register_next_step_handler(msg, confirm_search_step)
     except (
         sqlite3.Error,
         sqlite3.Warning,
@@ -284,7 +323,10 @@ def confirm_search_step(message):
             message.chat.id,
             f'{err} \n'
             'Такой прицеп есть в базе данных \n'
-            'Уточните поиск или создайте новый прицеп \n',
+            'Уточните поиск или создайте новый прицеп \n'
+            '\n'
+            '<i>Выберите действие:</i>',
+            parse_mode='HTML',
             reply_markup=search_create_trailer_btn()
         )
         bot.register_next_step_handler(msg, create_operation)
@@ -316,14 +358,27 @@ def create_trouble_step(message):
                 'Для возврата в главное меню используйте команду - /start',
                 reply_markup=markup
             )
-        else:
+        elif user_text == 'Внести проблему':
             msg = bot.send_message(
                 message.chat.id,
                 'Сейчас можно внести проблему по выбранному прицепу \n'
-                'Ожидание ввода...',
+                '\n'
+                '<i>Ожидание ввода...</i>',
+                parse_mode='HTML',
                 reply_markup=main_btn()
             )
             bot.register_next_step_handler(msg, create_trouble_to_database)
+        else:
+            msg = bot.send_message(
+                chat_id,
+                'Функция, в которой вы находитесь, ожидает на вход \n'
+                'команду с кнопок под клавиатурой. \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
+                reply_markup=main_trouble_btn()
+                )
+            bot.register_next_step_handler(msg, create_trouble_step)
     except Exception as err:
         bot.reply_to(
             message,
@@ -349,13 +404,14 @@ def create_trouble_to_database(message):
             trouble = user_dict[chat_id]
             trouble.user_id = chat_id
             trouble.problem = user_text
-            bot.send_message(
-                message.chat.id,
-                'Подтвердите ввод проблемы'
-                )
             msg = bot.send_message(
-                message.chat.id,
-                f'Вы ввели: {trouble.problem}',
+                chat_id,
+                'Подтвердите ввод проблемы \n'
+                '\n'
+                f'Вы ввели: {trouble.problem} \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=choose_markup()
                 )
             bot.register_next_step_handler(msg, confirm_trouble_to_database)
@@ -403,7 +459,10 @@ def confirm_trouble_to_database(message):
                 chat_id,
                 'Чтобы дополнить запись выберите соответствующую '
                 'кнопку для ввода. \n'
-                'Чтобы внести запись в базу данных нажмите "Внести запись" \n',
+                'Чтобы внести запись в базу данных нажмите "Внести запись" \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=create_markup()
             )
             bot.register_next_step_handler(message, write_trouble_to_database)
@@ -411,7 +470,10 @@ def confirm_trouble_to_database(message):
             msg = bot.send_message(
                 message.chat.id,
                 'Для возврата на шаг "ввод проблемы" \n'
-                'Нажмите кнопку "Внести проблему"',
+                'Нажмите кнопку "Внести проблему" \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=main_trouble_btn()
             )
             bot.register_next_step_handler(msg, create_trouble_step)
@@ -426,8 +488,11 @@ def confirm_trouble_to_database(message):
             bot.reply_to(
                 message,
                 'Ошибка! \n'
-                'Подтвердите ввод проблемы \n'
-                'Используйте кнопки под клавиатурой',
+                'Для подтверждения ввода '
+                'используйте кнопки под клавиатурой \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=choose_markup()
             )
             bot.register_next_step_handler(
@@ -477,7 +542,9 @@ def write_trouble_to_database(message):
             bot.send_message(
                 message.chat.id,
                 'Введите номер заказа \n'
-                'Ожидание ввода...',
+                '\n'
+                '<i>Ожидание ввода...</i>',
+                parse_mode='HTML',
                 reply_markup=markup
             )
             bot.register_next_step_handler(message, create_order_num)
@@ -486,21 +553,29 @@ def write_trouble_to_database(message):
             bot.send_message(
                 message.chat.id,
                 'Введите документ(СЗ) \n'
-                'Ожидание ввода...',
+                '\n'
+                '<i>Ожидание ввода...</i>',
+                parse_mode='HTML',
                 reply_markup=markup
             )
             bot.register_next_step_handler(message, create_document)
         elif user_text == 'Статус проблемы':
             bot.send_message(
                 message.chat.id,
-                'Для выбора статуса проблемы воспользуйтесь кнопками ввода',
+                'Для выбора статуса проблемы воспользуйтесь кнопками ввода \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=status_trouble_btn()
             )
             bot.register_next_step_handler(message, create_status)
         elif user_text == 'Виновник':
             bot.send_message(
                 message.chat.id,
-                'Для выбора виновника воспользуйтесь кнопками ввода',
+                'Для выбора виновника воспользуйтесь кнопками ввода \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=choose_causer()
             )
             bot.register_next_step_handler(message, create_causer)
@@ -515,7 +590,9 @@ def write_trouble_to_database(message):
                 'соответствующей команды. '
                 'Воспользуйтесь кнопками под клавиатурой чтобы выбрать '
                 'действие. \n'
-                'Выберите действие:',
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=create_markup()
                 )
             bot.register_next_step_handler(msg, write_trouble_to_database)
@@ -539,7 +616,10 @@ def create_order_num(message):
             chat_id,
             f'Номер заказа: {trouble.order_num} \n'
             'Для возврата на этап формирования записи нажмите "Да" '
-            'или вернитесь в главное меню.',
+            'или вернитесь в главное меню. \n'
+            '\n'
+            '<i>Выберите действие:</i>',
+            parse_mode='HTML',
             reply_markup=yes_main_menu_btns()
         )
         bot.register_next_step_handler(msg, confirm_trouble_to_database)
@@ -563,7 +643,10 @@ def create_document(message):
             chat_id,
             f'Документ: {trouble.document} \n'
             'Для возврата на этап формирования записи нажмите "Да" '
-            'или вернитесь в главное меню.',
+            'или вернитесь в главное меню. \n'
+            '\n'
+            '<i>Выберите действие:</i>',
+            parse_mode='HTML',
             reply_markup=yes_main_menu_btns()
         )
         bot.register_next_step_handler(msg, confirm_trouble_to_database)
@@ -581,7 +664,7 @@ def create_status(message):
     try:
         chat_id = message.chat.id
         user_text = message.text
-        if user_text == 'Решена' or user_text == 'Требует решения':
+        if user_text in ('Решена', 'Требует решения'):
             if user_text == 'Решена':
                 status = 1
             elif user_text == 'Требует решения':
@@ -592,7 +675,10 @@ def create_status(message):
                 chat_id,
                 f'Статус проблемы: {user_text} \n'
                 'Для возврата на этап формирования записи нажмите "Да" '
-                'или вернитесь в главное меню.',
+                'или вернитесь в главное меню. \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=yes_main_menu_btns()
             )
             bot.register_next_step_handler(msg, confirm_trouble_to_database)
@@ -601,7 +687,9 @@ def create_status(message):
                 chat_id,
                 'Функция, в которой вы находитесь, ожидает на вход '
                 'команду с кнопок под клавиатурой \n'
-                'Выберите действие:',
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
                 reply_markup=status_trouble_btn()
             )
             bot.register_next_step_handler(msg, create_status)
@@ -619,23 +707,41 @@ def create_causer(message):
     try:
         chat_id = message.chat.id
         user_text = message.text
-        causer_id = db.search_causer_id(user_text)[0]
-        trouble = user_dict[chat_id]
-        trouble.causer_id = causer_id
-        causer = db.search_causer_name(trouble.causer_id)[0]
-        msg = bot.send_message(
-            chat_id,
-            f'Виновник: {causer} \n'
-            'Для возврата на этап формирования записи нажмите "Да" '
-            'или вернитесь в главное меню.',
-            reply_markup=yes_main_menu_btns()
-        )
-        bot.register_next_step_handler(msg, confirm_trouble_to_database)
+        if user_text in ('КО', 'Производство', 'Снабжение'):
+            causer_id = db.search_causer_id(user_text)[0]
+            trouble = user_dict[chat_id]
+            trouble.causer_id = causer_id
+            causer = db.search_causer_name(trouble.causer_id)[0]
+            msg = bot.send_message(
+                chat_id,
+                f'Виновник: {causer} \n'
+                'Для возврата на этап формирования записи нажмите "Да" '
+                'или вернитесь в главное меню. \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
+                reply_markup=yes_main_menu_btns()
+            )
+            bot.register_next_step_handler(msg, confirm_trouble_to_database)
+        else:
+            msg = bot.send_message(
+                chat_id,
+                'Функция, в которой вы находитесь, ожидает на вход '
+                'команду с кнопок под клавиатурой \n'
+                '\n'
+                '<i>Выберите действие:</i>',
+                parse_mode='HTML',
+                reply_markup=choose_causer()
+            )
+            bot.register_next_step_handler(msg, create_causer)
     except IndexError:
         msg = bot.send_message(
             message.chat.id,
             'Ошибка ввода \n'
-            'Воспользуйтесь кнопками ввода для выбор действия \n',
+            'Воспользуйтесь кнопками ввода для выбор действия \n'
+            '\n'
+            '<i>Выберите действие:</i>',
+            parse_mode='HTML',
             reply_markup=choose_causer()
             )
         bot.register_next_step_handler(msg, create_causer)
