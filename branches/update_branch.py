@@ -52,14 +52,16 @@ def update_operation(message):
             trouble.causer_id = trouble_db[7]
             trouble.user_id = trouble_db[8]
 
-            if trouble.status == 0:
+            if trouble.status is None:
+                status = None
+            elif trouble.status == 0:
                 status = 'Требует решения'
             else:
                 status = 'Проблема решена'
 
             trailer = db.search_trailer(trouble.trailer_id)
 
-            if trouble.trailer_id is None:
+            if trouble.causer_id is None:
                 causer = None
             else:
                 causer = db.search_causer_name(trouble_db[7])[0]

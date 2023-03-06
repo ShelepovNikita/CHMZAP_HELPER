@@ -48,7 +48,9 @@ def delete_operation(message):
             trouble.causer_id = trouble_db[7]
             trouble.user_id = trouble_db[8]
 
-            if trouble.status == 0:
+            if trouble.status is None:
+                status = None
+            elif trouble.status == 0:
                 status = 'Требует решения'
             else:
                 status = 'Проблема решена'

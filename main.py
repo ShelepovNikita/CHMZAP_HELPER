@@ -29,33 +29,34 @@ from telebot import types
 @bot.message_handler(commands=['start'])
 def first_step(message):
     try:
-        chat_id = message.chat.id
-        db.create_tables()
-        if (not db.check_user(message.from_user.id)):
-            bot.send_message(
-                chat_id,
-                'Сообщение для незарегистрированных пользователей. \n'
-                'Добро пожаловать в КО-2 бот.\n'
-                f'Ваш id: {chat_id}.\n'
-                f'Ваше имя: {message.from_user.first_name} '
-                f'{message.from_user.last_name}\n'
-                'После введения ключа доступа вы будете внесены '
-                'в базу данных.\n'
-                'Убедитесь в коррекности имени и фамилии.\n'
-                'При необходимости измените данные в настройках телеграм.'
-                )
-            time.sleep(2)
-            bot.send_message(
-                chat_id,
-                'Введите ключ доступа:'
-                )
-        else:
-            msg = bot.send_message(
-                chat_id,
-                'Главное меню.',
-                reply_markup=main_markup()
-                )
-            bot.register_next_step_handler(msg, main_operation_step)
+        if message.chat.type == 'private':
+            chat_id = message.chat.id
+            db.create_tables()
+            if (not db.check_user(message.from_user.id)):
+                bot.send_message(
+                    chat_id,
+                    'Сообщение для незарегистрированных пользователей. \n'
+                    'Добро пожаловать в КО-2 бот.\n'
+                    f'Ваш id: {chat_id}.\n'
+                    f'Ваше имя: {message.from_user.first_name} '
+                    f'{message.from_user.last_name}\n'
+                    'После введения ключа доступа вы будете внесены '
+                    'в базу данных.\n'
+                    'Убедитесь в коррекности имени и фамилии.\n'
+                    'При необходимости измените данные в настройках телеграм.'
+                    )
+                time.sleep(2)
+                bot.send_message(
+                    chat_id,
+                    'Введите ключ доступа:'
+                    )
+            else:
+                msg = bot.send_message(
+                    chat_id,
+                    'Главное меню.',
+                    reply_markup=main_markup()
+                    )
+                bot.register_next_step_handler(msg, main_operation_step)
     except Exception:
         bot.reply_to(
             message,
@@ -68,26 +69,27 @@ def first_step(message):
 @bot.message_handler(commands=['CHMZAP'])
 def register_step(message):
     try:
-        chat_id = message.chat.id
-        if db.check_user(chat_id):
-            msg = bot.send_message(
-                chat_id,
-                'Главное меню.',
-                reply_markup=main_markup()
+        if message.chat.type == 'private':
+            chat_id = message.chat.id
+            if db.check_user(chat_id):
+                msg = bot.send_message(
+                    chat_id,
+                    'Главное меню.',
+                    reply_markup=main_markup()
+                    )
+                bot.register_next_step_handler(msg, main_operation_step)
+            else:
+                data = (
+                    chat_id,
+                    message.from_user.first_name,
+                    message.from_user.last_name,
                 )
-            bot.register_next_step_handler(msg, main_operation_step)
-        else:
-            data = (
-                chat_id,
-                message.from_user.first_name,
-                message.from_user.last_name,
-            )
-            db.create_user(data)
-            bot.send_message(
-                message.chat.id,
-                'Регистрация успешна. Вы внесены в базу данных.'
-                'Главное меню - /start'
-            )
+                db.create_user(data)
+                bot.send_message(
+                    message.chat.id,
+                    'Регистрация успешна. Вы внесены в базу данных.'
+                    'Главное меню - /start'
+                )
     except Exception:
         bot.reply_to(
             message,
@@ -180,14 +182,15 @@ def update_email(message):
     content_types=['text', 'audio', 'document', 'photo', 'sticker', 'video'])
 def text_filter(message):
     try:
-        markup = types.ReplyKeyboardRemove(selective=False)
-        bot.send_message(
-            message.chat.id,
-            'Бот не поддерживает работу с текстом. \n'
-            'Для дальнейшей работы вызовите главное меню \n'
-            'Главное меню - /start',
-            reply_markup=markup
-            )
+        if message.chat.type == 'private':
+            markup = types.ReplyKeyboardRemove(selective=False)
+            bot.send_message(
+                message.chat.id,
+                'Бот не поддерживает работу с текстом. \n'
+                'Для дальнейшей работы вызовите главное меню \n'
+                'Главное меню - /start',
+                reply_markup=markup
+                )
     except Exception:
         bot.reply_to(
             message,
