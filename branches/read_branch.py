@@ -14,7 +14,7 @@ from constains import (
     TOO_LONG,
     IS_EMPTY
 )
-from transform import transform_to_1c
+from designation_functions import transform_to_1c
 from telebot.apihelper import ApiTelegramException
 
 user_dict = {}
@@ -116,16 +116,15 @@ def email_operation_to_db(message):
                 reply_markup=markup
             )
         else:
-            flag = False
-            for i in user_text:
-                if i in '@':
-                    flag = True
-            if flag:
-                db.create_email(user_text, chat_id)
+            chat_id = message.chat.id
+            user_text = message.text
+            if '@' in user_text:
+                mail = user_text.strip()
+                db.create_email(mail, chat_id)
                 msg = bot.send_message(
                     chat_id,
                     'Адрес электронной почты успешно внесен в базу данных ! \n'
-                    f'Ваш адрес: {user_text} \n'
+                    f'Ваш адрес: {mail} \n'
                     'Для продолжения работы в ветке чтения выберите действие:',
                     reply_markup=read_markup()
                 )
@@ -327,7 +326,6 @@ def send_excel_trailer_operation(message):
             if we.create_excel(troubles, folder):
                 mail = db.check_email(chat_id)
                 if se.send_email_from_db(mail, folder, output_str):
-                    # we.delete_excel()
                     markup = types.ReplyKeyboardRemove(selective=False)
                     bot.send_message(
                         chat_id,

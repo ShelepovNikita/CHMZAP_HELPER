@@ -1,5 +1,5 @@
 
-from config import bot, db, group_id
+from config import bot, db, GROUP_ID
 from markups import (
     choose_markup,
     main_btn,
@@ -216,8 +216,9 @@ def update_trouble_to_database(message):
                     status = 'Проблема решена'
                 count = db.count_troubles()[0]
                 bot.send_message(
-                    group_id,
-                    f'<b>Пользователь {message.from_user.last_name} '
+                    GROUP_ID,
+                    f'<b>Пользователь {message.from_user.first_name} '
+                    f'{message.from_user.last_name} '
                     'отредактировал запись!</b> \n'
                     f'Прицеп: {trailer[0]} \n'
                     f'Проблема: {trouble.problem} \n'

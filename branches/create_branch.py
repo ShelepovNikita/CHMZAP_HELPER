@@ -1,7 +1,7 @@
 
 
 from datetime import datetime
-from config import bot, db, group_id
+from config import bot, db, GROUP_ID
 from markups import (
     choose_markup,
     choose_causer,
@@ -13,7 +13,7 @@ from markups import (
     status_trouble_btn
 )
 from telebot import types
-from transform import transform_to_1c
+from designation_functions import transform_to_1c
 from telebot.apihelper import ApiTelegramException
 from constains import (
     TOO_LONG,
@@ -537,7 +537,8 @@ def write_trouble_to_database(message):
                 'Главное меню - /start',
                 reply_markup=markup
             )
-            user = db.search_user_last_name(trouble.user_id)
+            user_last_name = db.search_user_last_name(trouble.user_id)[0]
+            user_first_name = db.search_user_first_name(trouble.user_id)[0]
             trailer = db.search_trailer(trouble.trailer_id)
             if trouble.status is None:
                 status = None
@@ -547,8 +548,10 @@ def write_trouble_to_database(message):
                 status = 'Проблема решена'
             count = db.count_troubles()[0]
             bot.send_message(
-                group_id,
-                f'<b>Пользователь {user[0]} внес запись!</b> \n'
+                GROUP_ID,
+                f'<b>Пользователь {user_first_name} '
+                f'{user_last_name} '
+                'внес запись!</b> \n'
                 f'Прицеп: {trailer[0]} \n'
                 f'Проблема: {trouble.problem} \n'
                 f'Статус проблемы: {status} \n'

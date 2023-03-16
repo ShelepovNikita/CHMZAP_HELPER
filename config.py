@@ -1,21 +1,26 @@
 
+import os
 import telebot
 import database
+from dotenv import load_dotenv
 
-TOKEN = "6145350195:AAE6cjMxBHe59jK8JORthBs39NrnT4sZix4"
-URL = 'CHMZAP'
-key = ['CHMZAP']
+load_dotenv()
+
+TOKEN = os.getenv('BOT_TOKEN')
+URL = os.getenv('URL')
+GROUP_ID = os.getenv('GROUP_ID')
+# key = ['CHMZAP']
+
+SENDER = os.getenv('SENDER')
+PASSWORD = os.getenv('PASSWORD')
+
 bot = telebot.TeleBot(TOKEN, threaded=False)
+bot.set_my_commands([
+    telebot.types.BotCommand("/start", "Главное меню"),
+    telebot.types.BotCommand("/help", "Описание"),
+    telebot.types.BotCommand("/count", "Количество записей"),
+    telebot.types.BotCommand("/change_mail", "Смена почты"),
+    telebot.types.BotCommand("/check_trouble", "Вывести запись"),
+])
+
 db = database.Database('chmzap_sq.sqlite')
-group_id = '-984037417'
-
-sender = 'chmzap.helper@gmail.com'
-password = 'aqosuhvcoztgwpme'
-
-# connection_config_dict = {
-#     'user': 'ShelepovFamily',
-#     'password': 'CHMZAP100-01',
-#     'host': 'ShelepovFamily.mysql.pythonanywhere-services.com',
-#     'database': 'ShelepovFamily$CHMZAP'
-# }
-# https://api.telegram.org/bot6052229593:AAFZ7aiWk9--c_0yle3P2Uw1VTNXdPg7tUM/setWebhook?remove

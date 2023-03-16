@@ -201,6 +201,13 @@ class Database:
                 (external_id,)).fetchall()
         return result[0]
 
+    def search_user_first_name(self, external_id):
+        with self.con:
+            result = self.cur.execute(
+                'SELECT first_name FROM users WHERE external_id = ?;',
+                (external_id,)).fetchall()
+        return result[0]
+
     # Поиск по дате
     def search_by_date_in_troubles(self, date):
         date = ('%' + date + '%')

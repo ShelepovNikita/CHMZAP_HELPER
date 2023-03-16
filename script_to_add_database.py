@@ -7,7 +7,7 @@ import os
 # sys.path.append('..')
 # For windows
 # sys.path.append('C:/pet_Dev/CHMZAP_HELPER')
-from transform import transform_to_1c
+from designation_functions import transform_to_1c
 from config import db
 
 
@@ -197,8 +197,3 @@ def add_troubles_in_db():
                 db.create_trouble(str_of_table)
     except Exception as err:
         print(err)
-
-
-# add_trailers_in_db('C:/pet_Dev/CHMZAP_HELPER/for_excel_files/Список прицепов мой.xlsx')
-# create_excel_troubles('Прицепы, ошибки и статистика 2023.xlsx')
-# add_troubles_in_db()

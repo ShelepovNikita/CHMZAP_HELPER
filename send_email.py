@@ -8,20 +8,17 @@ from email.mime.text import MIMEText
 
 import os
 import mimetypes
-import config
+from config import SENDER, PASSWORD
 
 
 def send_email_from_db(recipient, user_folder, message_text='Default request'):
-    sender = config.sender
-    password = config.password
-
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
 
     try:
-        server.login(sender, password)
+        server.login(SENDER, PASSWORD)
         msg = MIMEMultipart()
-        msg["From"] = sender
+        msg["From"] = SENDER
         msg["To"] = recipient
         msg["Subject"] = "Сформирован ответ на ваш запрос в базу данных"
 
@@ -43,7 +40,7 @@ def send_email_from_db(recipient, user_folder, message_text='Default request'):
             )
             msg.attach(file)
 
-        server.sendmail(sender, recipient, msg.as_string())
+        server.sendmail(SENDER, recipient, msg.as_string())
         return True
     except Exception:
         return False
