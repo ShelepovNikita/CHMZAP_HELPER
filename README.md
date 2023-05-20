@@ -1,2 +1,2 @@
 # CHMZAP_HELPER
-help with engineers troubles
+Telegram bot to help with engineers troubles
