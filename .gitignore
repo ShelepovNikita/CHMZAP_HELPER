@@ -1,5 +1,8 @@
-# Excel files
+# Excel files and others
 for_excel_files/
+pic/
+send_email/
+*.xlsx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
