@@ -1,29 +1,39 @@
 
-# from flask import Flask, request
-# import telebot
+import os
+from flask import Flask, request
+import telebot
 import time
-# import random
-# import string
+import random
+import string
 from config import bot, db
-# from config import URL
+from config import URL
 from markups import main_markup, main_btn
 from branches.main_branch import main_operation_step
 from telebot import types
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
-# secret = ''.join(random.choice(string.ascii_letters) for x in range(20))
+secret = ''.join(random.choice(string.ascii_letters) for x in range(20))
 
-# bot.remove_webhook()
-# time.sleep(1)
-# bot.set_webhook(url="https://{}.pythonanywhere.com/{}".format(URL, secret))
+bot.remove_webhook()
+time.sleep(1)
+bot.set_webhook(url="https://{}.pythonanywhere.com/{}".format(URL, secret))
 
-# app = Flask(__name__)
+app = Flask(__name__)
 
-# @app.route('/{}'.format(secret), methods=["POST"])
-# def webhook():
-#     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
-#     print("Message")
-#     return "ok", 200
+app.config['TOKEN'] = os.getenv('BOT_TOKEN')
+app.config['URL'] = os.getenv('URL')
+app.config['GROUP_ID'] = os.getenv('GROUP_ID')
+app.config['SENDER'] = os.getenv('SENDER')
+app.config['PASSWORD'] = os.getenv('PASSWORD')
+
+@app.route('/{}'.format(secret), methods=["POST"])
+def webhook():
+    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
+    print("Message")
+    return "ok", 200
 
 
 @bot.message_handler(commands=['start'])
@@ -163,7 +173,7 @@ def check_trouble(message):
     except Exception:
         bot.reply_to(
             message,
-            f'Функция: {help.__name__} \n'
+            f'Функция: {check_trouble.__name__} \n'
             f'{Exception} \n'
             'Главное меню - /start'
             )
@@ -250,7 +260,7 @@ def change_mail(message):
     except Exception:
         bot.reply_to(
             message,
-            f'Функция: {register_step.__name__} \n'
+            f'Функция: {change_mail.__name__} \n'
             f'{Exception} \n'
             'Главное меню - /start'
             )
@@ -315,4 +325,5 @@ def text_filter(message):
             )
 
 
-bot.polling(non_stop=True)
+if __name__ == '__main__':
+    app.run()

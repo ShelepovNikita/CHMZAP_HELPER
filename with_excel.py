@@ -5,9 +5,9 @@ from config import db
 
 
 def create_user_folder(user_id):
-    DIR = f'/home/shelepovfamily/Dev/CHMZAP_HELPER/send_email/attachments/{user_id}'
+    DIR = f'/home/CHMZAP/CHMZAP_HELPER/send_email/attachments/{user_id}'
     if not os.path.isdir(DIR):
-        os.makedirs(DIR)
+        os.mkdir(DIR)
     return DIR
 
 

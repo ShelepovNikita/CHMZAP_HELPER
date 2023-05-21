@@ -24,3 +24,9 @@ bot.set_my_commands([
 ])
 
 db = database.Database('chmzap_sq.sqlite')
+
+# app.config['TOKEN'] = os.getenv('BOT_TOKEN')
+# app.config['URL'] = os.getenv('URL')
+# app.config['GROUP_ID'] = os.getenv('GROUP_ID')
+# app.config['SENDER'] = os.getenv('SENDER')
+# app.config['PASSWORD'] = os.getenv('PASSWORD')
