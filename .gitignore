@@ -3,6 +3,7 @@ for_excel_files/
 pic/
 send_email/
 *.xlsx
+*.sqlite
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
